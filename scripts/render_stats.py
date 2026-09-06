@@ -128,6 +128,16 @@ def main():
     d = collect()
     out_dir = pathlib.Path(__file__).resolve().parent.parent / "assets"
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    # A token without read:user reports zero private contributions rather
+    # than failing. Overwriting a good card with that would erase most of
+    # the activity, so keep whatever is already committed instead.
+    if d["private"] == 0 and (out_dir / "stats-dark.svg").exists():
+        print("Private contributions came back as 0, which means this token "
+              "cannot see them. Keeping the existing card.\n"
+              "Add a PROFILE_TOKEN secret with the read:user scope to fix.")
+        return
+
     for name in THEMES:
         path = out_dir / f"stats-{name}.svg"
         path.write_text(build(name, d), encoding="utf-8")
