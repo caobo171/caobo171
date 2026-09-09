@@ -65,6 +65,27 @@
   animation: rise 900ms ease 80ms both;
 }
 
+.intro {
+  display: flow-root;
+}
+
+.portrait {
+  float: right;
+  width: min(33%, 11rem);
+  height: auto;
+  aspect-ratio: 1;
+  margin: 0.15rem 0 1.1rem 1.75rem;
+  border-radius: 999px;
+  object-fit: cover;
+  box-shadow:
+    0 0 0 3px rgba(240, 180, 41, 0.35),
+    0 10px 28px rgba(19, 24, 50, 0.12);
+}
+
+.introCopy {
+  min-width: 0;
+}
+
 .lead {
   font-size: clamp(1.35rem, 2.4vw, 1.65rem);
   font-weight: 600;
@@ -184,5 +205,16 @@
 
   .main {
     padding-block: 2rem 3rem;
+  }
+
+  .portrait {
+    float: none;
+    display: block;
+    width: 8.5rem;
+    margin: 0 auto 1.35rem;
+  }
+
+  .lead {
+    text-align: center;
   }
 }

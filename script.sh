@@ -7,14 +7,14 @@
 #   ./script.sh --restart    # skip build, just restart pm2
 #   ./script.sh --no-install # skip npm ci/install
 #
-# Process: caobo171.web on port 3010 (see web/ecosystem.config.js)
+# Process: caobo171.web on port 41717 (see web/ecosystem.config.js)
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 WEB_DIR="$SCRIPT_DIR/web"
 APP_NAME="caobo171.web"
-PORT="${PORT:-3010}"
+PORT="${PORT:-41717}"
 HEALTH_URL="http://127.0.0.1:${PORT}/api/health"
 
 BUILD=true

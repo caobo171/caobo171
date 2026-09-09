@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import styles from "./page.module.css";
 
@@ -31,23 +32,40 @@ export default function HomePage() {
       </header>
 
       <main className={`${styles.shell} ${styles.main}`}>
-        <p className={styles.lead}>
-          Still trying to become a real engineer.
-        </p>
+        <div className={styles.intro}>
+          <Image
+            className={styles.portrait}
+            src="/profile.jpg"
+            alt="Nguyễn Văn Cao"
+            width={400}
+            height={400}
+            priority
+          />
+          <div className={styles.introCopy}>
+            <p className={styles.lead}>
+              Still trying to become a real engineer.
+            </p>
 
-        <div className={styles.prose}>
-          <p>
-            I&apos;m a developer in Vietnam. I work at{" "}
-            <a href="https://rework.com" target="_blank" rel="noopener noreferrer">
-              Rework
-            </a>
-            , and most of the rest of my time goes into products I build myself —
-            usually alone, usually late.
-          </p>
-          <p>
-            Nine years and fifty-odd repositories in, I still describe myself as
-            someone trying to become a real engineer. That&apos;s the honest version.
-          </p>
+            <div className={styles.prose}>
+              <p>
+                I&apos;m a developer in Vietnam. I work at{" "}
+                <a
+                  href="https://rework.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Rework
+                </a>
+                , and most of the rest of my time goes into products I build
+                myself — usually alone, usually late.
+              </p>
+              <p>
+                Nine years and fifty-odd repositories in, I still describe myself
+                as someone trying to become a real engineer. That&apos;s the honest
+                version.
+              </p>
+            </div>
+          </div>
         </div>
 
         <section className={styles.section} aria-labelledby="wele-heading">

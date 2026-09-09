@@ -40,11 +40,11 @@ Then `/api/health` should return `{ "ok": true, "db": "ok" }`.
 On the server (after `git pull`), from the repo root:
 
 ```bash
-./script.sh              # install + build + pm2 restart (port 3010)
+./script.sh              # install + build + pm2 restart (port 41717)
 ./script.sh --restart    # pm2 only
 ```
 
-PM2 process name: `caobo171.web`. Health: `http://127.0.0.1:3010/api/health`.
+PM2 process name: `caobo171.web`. Health: `http://127.0.0.1:41717/api/health`.
 
 Or build a Node standalone server:
 
