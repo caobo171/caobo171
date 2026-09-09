@@ -1,0 +1,68 @@
+:root {
+  --ink: #131832;
+  --ink-soft: #3a415c;
+  --gold: #f0b429;
+  --gold-deep: #c9921a;
+  --paper: #faf9f7;
+  --rule: #e4e1d8;
+  --link: #1a3a8a;
+  --link-hover: #131832;
+  --max: 42rem;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-serif), "Source Serif 4", Georgia, serif;
+  font-size: 1.125rem;
+  font-weight: 400;
+  line-height: 1.7;
+  color: var(--ink);
+  background:
+    radial-gradient(ellipse 120% 80% at 10% -20%, rgba(240, 180, 41, 0.08), transparent 50%),
+    radial-gradient(ellipse 90% 60% at 100% 0%, rgba(19, 24, 50, 0.04), transparent 45%),
+    var(--paper);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--link);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  transition: color 160ms ease;
+}
+
+a:hover {
+  color: var(--link-hover);
+}
+
+a:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+::selection {
+  background: rgba(240, 180, 41, 0.35);
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
