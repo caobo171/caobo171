@@ -37,11 +37,18 @@ Then `/api/health` should return `{ "ok": true, "db": "ok" }`.
 
 ## Deploy
 
-Build a Node standalone server:
+On the server (after `git pull`), from the repo root:
 
 ```bash
-npm run build
-# run node .next/standalone/server.js (after copying static assets per Next standalone docs)
+./script.sh              # install + build + pm2 restart (port 3010)
+./script.sh --restart    # pm2 only
 ```
 
-Or deploy `web/` to any host that runs Next.js (Vercel, Railway, a VPS, etc.).
+PM2 process name: `caobo171.web`. Health: `http://127.0.0.1:3010/api/health`.
+
+Or build a Node standalone server:
+
+```bash
+cd web && npm run build
+# run node .next/standalone/server.js (after copying static assets per Next standalone docs)
+```
