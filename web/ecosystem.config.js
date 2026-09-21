@@ -5,7 +5,7 @@ module.exports = {
       cwd: __dirname,
       script: "node_modules/next/dist/bin/next",
       args: "start -p 41717",
-      node_args: "--max-old-space-size=384",
+      node_args: "--max-old-space-size=250",
       instances: 1,
       exec_mode: "fork",
       env: {
