@@ -66,3 +66,31 @@ a:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Layout primitive and entrance animation shared by every page. */
+.shell {
+  width: min(100% - 2rem, var(--max));
+  margin-inline: auto;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.6rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media print {
+  html,
+  body {
+    background: #fff;
+  }
+
+  .shell {
+    width: 100%;
+  }
+}

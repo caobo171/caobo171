@@ -14,7 +14,8 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## What’s included
 
-- Homepage: bio, WELE, Writing → [Substack](https://kaonguyen.substack.com/), open source, links
+- Homepage: bio, WELE, open source, links
+- `/resume` — resume page in the site's type and palette, print/PDF-ready (2 pages A4)
 - `GET /api/health` — always works; reports `db: "not_configured"` until you set `DATABASE_URL`
 - Drizzle schema (`contact_messages`) ready for later features
 - `output: "standalone"` for self-hosting

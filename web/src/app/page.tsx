@@ -1,37 +1,14 @@
 import Image from "next/image";
-import Link from "next/link";
+import { SiteFooter, SiteHeader } from "./_components/site-chrome";
+import { GITHUB, LINKEDIN, WELE, X } from "./links";
 import styles from "./page.module.css";
-
-const SUBSTACK = "https://kaonguyen.substack.com/";
-const GITHUB = "https://github.com/caobo171";
-const WELE = "https://wele-learn.com";
-const LINKEDIN = "https://www.linkedin.com/in/kaonguyen1701/";
-const X = "https://x.com/Kaonguyen171";
 
 export default function HomePage() {
   return (
     <>
-      <header className={styles.siteHeader}>
-        <div className={`${styles.shell} ${styles.headerInner}`}>
-          <Link className={styles.brand} href="/">
-            <span className={styles.brandMark} aria-hidden="true" />
-            Nguyễn Văn Cao
-          </Link>
-          <nav className={styles.nav} aria-label="Primary">
-            <a href={SUBSTACK} target="_blank" rel="noopener noreferrer">
-              Writing
-            </a>
-            <a href={WELE} target="_blank" rel="noopener noreferrer">
-              WELE
-            </a>
-            <a href={GITHUB} target="_blank" rel="noopener noreferrer">
-              GitHub
-            </a>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader current="home" />
 
-      <main className={`${styles.shell} ${styles.main}`}>
+      <main className={`shell ${styles.main}`}>
         <div className={styles.intro}>
           <Image
             className={styles.portrait}
@@ -109,23 +86,6 @@ export default function HomePage() {
               rel="noopener noreferrer"
             >
               Google Play
-            </a>
-          </div>
-        </section>
-
-        <section className={styles.section} aria-labelledby="writing-heading">
-          <h2 id="writing-heading" className={styles.sectionTitle}>
-            Writing
-          </h2>
-          <div className={styles.prose}>
-            <p>
-              Notes and longer pieces live on Substack — not here. If you want the
-              writing, go there.
-            </p>
-          </div>
-          <div className={styles.links}>
-            <a href={SUBSTACK} target="_blank" rel="noopener noreferrer">
-              kaonguyen.substack.com
             </a>
           </div>
         </section>
@@ -218,23 +178,11 @@ export default function HomePage() {
             <a href={X} target="_blank" rel="noopener noreferrer">
               X
             </a>
-            <a href={SUBSTACK} target="_blank" rel="noopener noreferrer">
-              Substack
-            </a>
           </div>
         </section>
       </main>
 
-      <footer className={styles.siteFooter}>
-        <div className={styles.shell}>
-          <p>
-            © {new Date().getFullYear()} Nguyễn Văn Cao ·{" "}
-            <a href={SUBSTACK} target="_blank" rel="noopener noreferrer">
-              Writing on Substack
-            </a>
-          </p>
-        </div>
-      </footer>
+      <SiteFooter />
     </>
   );
 }
