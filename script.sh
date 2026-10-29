@@ -1,6 +1,12 @@
 #!/bin/bash
 # Deploy the personal site (Next.js in web/).
-# Run on the server after `git pull` (same idea as ~/project/wele/script.sh).
+#
+# Run on the server from the repo root, after `git pull`. The script locates
+# itself, so the checkout path does not matter (today: /root/caobo171).
+#
+# Needs Node 20.9+ (Next 16). pm2 runs the app from nvm, but a non-interactive
+# `ssh host ./script.sh` gets the system node instead, so the script loads nvm
+# itself and refuses to build on a Node too old to produce a working bundle.
 #
 # Usage:
 #   ./script.sh              # npm install (if needed), build, pm2 restart
@@ -25,7 +31,7 @@ for arg in "$@"; do
     --restart)    BUILD=false ;;
     --no-install) RUN_INSTALL=false ;;
     -h|--help)
-      sed -n '2,12p' "$0"
+      awk 'NR > 1 && /^#/ { sub(/^# ?/, ""); print; next } NR > 1 { exit }' "$0"
       exit 0
       ;;
     *)
@@ -34,6 +40,26 @@ for arg in "$@"; do
       ;;
   esac
 done
+
+# pm2 launched this app from nvm's Node; a non-interactive shell would
+# otherwise build it with whatever /usr/bin/node happens to be.
+if [ -s "${NVM_DIR:-$HOME/.nvm}/nvm.sh" ]; then
+  # shellcheck disable=SC1091
+  . "${NVM_DIR:-$HOME/.nvm}/nvm.sh"
+fi
+
+NODE_VERSION="$(node -v 2>/dev/null || true)"
+if [ -z "$NODE_VERSION" ]; then
+  echo "ERROR: node not found on PATH."
+  exit 1
+fi
+NODE_MAJOR="${NODE_VERSION#v}"
+NODE_MAJOR="${NODE_MAJOR%%.*}"
+if [ "$NODE_MAJOR" -lt 20 ]; then
+  echo "ERROR: Node $NODE_VERSION on PATH, but Next 16 needs 20.9+."
+  echo "       Install/select it with nvm, e.g.: nvm install 22 && nvm alias default 22"
+  exit 1
+fi
 
 if [ ! -d "$WEB_DIR" ]; then
   echo "ERROR: web/ not found at $WEB_DIR"
@@ -80,13 +106,24 @@ pm2 save 2>/dev/null || true
 echo ""
 
 echo "===== Health check ====="
-echo -n "$HEALTH_URL ... "
-if curl -fsS --max-time 8 "$HEALTH_URL"; then
-  echo
-else
-  echo "FAILED — check: pm2 logs $APP_NAME"
-  exit 1
-fi
+echo "$HEALTH_URL"
+
+# pm2 returns as soon as it has spawned the process, but Next needs a moment
+# more to bind the port. Curling once here reports FAILED on a good deploy,
+# so poll until it answers or the timeout runs out.
+HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-60}"
+health_deadline=$(( SECONDS + HEALTH_TIMEOUT ))
+while true; do
+  if health_body="$(curl -fsS --max-time 5 "$HEALTH_URL" 2>/dev/null)"; then
+    echo "  OK after ${SECONDS}s — $health_body"
+    break
+  fi
+  if [ "$SECONDS" -ge "$health_deadline" ]; then
+    echo "  FAILED after ${HEALTH_TIMEOUT}s — check: pm2 logs $APP_NAME"
+    exit 1
+  fi
+  sleep 2
+done
 echo ""
 
 echo "========== DEPLOY COMPLETE =========="
