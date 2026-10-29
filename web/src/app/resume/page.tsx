@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Resume — Nguyễn Văn Cao",
     description:
-      "Senior full-stack engineer in Hanoi. Lead engineer on Rework's platform, co-founder of WELE-Learn.",
+      "Senior full-stack engineer in Hanoi. Developer at Go1, former lead engineer on Rework's platform, co-founder of WELE-Learn.",
     type: "profile",
   },
 };
@@ -24,7 +24,7 @@ export default function ResumePage() {
       <main className={`shell ${styles.main}`}>
         <header className={styles.masthead}>
           <h1 className={styles.name}>Nguyễn Văn Cao</h1>
-          <p className={styles.role}>Software Engineer</p>
+          <p className={styles.role}>Senior Full-Stack Engineer</p>
           <ul className={styles.contact}>
             <li>
               <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
@@ -52,8 +52,10 @@ export default function ResumePage() {
           </h2>
           <p className={styles.summary}>
             Senior full-stack engineer (6+ yrs) shipping production multi-tenant
-            SaaS and AI features end-to-end. Lead engineer behind Rework&apos;s
-            platform ($0 → ~$500K ARR across 5 years; lead on Rework Agent, the
+            SaaS and AI features end-to-end. Currently a developer at Go1
+            (Australia) on Immersive Simulations, an AI avatar roleplay
+            product for compliance training. Previously lead engineer behind
+            Rework&apos;s platform ($0 → ~$500K ARR across 4 years; lead on Rework Agent, the
             platform&apos;s user-facing AI agent builder) and co-founder of
             WELE-Learn — a podcast-based English-learning platform serving
             50,000 registered learners across web, iOS, and Android.
@@ -68,10 +70,31 @@ export default function ResumePage() {
           <div className={styles.entry}>
             <div className={styles.entryHead}>
               <h3 className={styles.roleLine}>
+                Developer <span className={styles.org}>· Go1 (Australia)</span>
+              </h3>
+              <span className={styles.meta}>Sep 2026 – Present</span>
+            </div>
+            <p className={styles.sub}>Remote</p>
+            <ul className={styles.bullets}>
+              <li>
+                <strong>
+                  Building Go1 Immersive Simulations, an AI roleplay product for
+                  compliance training.
+                </strong>{" "}
+                Learners talk to AI avatars by voice or text in realistic
+                workplace scenarios and get behavior-based feedback. Assignments sync to enterprise
+                LMSs including Workday, SAP SuccessFactors, Oracle, and Litmos.
+              </li>
+            </ul>
+          </div>
+
+          <div className={styles.entry}>
+            <div className={styles.entryHead}>
+              <h3 className={styles.roleLine}>
                 Lead Software Engineer{" "}
                 <span className={styles.org}>· Rework.com (Base Global)</span>
               </h3>
-              <span className={styles.meta}>Jun 2022 – Present</span>
+              <span className={styles.meta}>Jun 2022 – Aug 2026</span>
             </div>
             <p className={styles.sub}>Hanoi</p>
             <ul className={styles.bullets}>
@@ -88,7 +111,7 @@ export default function ResumePage() {
                 <strong>
                   Brought Rework&apos;s first revenue product to market.
                 </strong>{" "}
-                Lead the Work Ops suite — Projects, Workflows, Automation —
+                Led the Work Ops suite — Projects, Workflows, Automation —
                 including a visual node-based automation engine with branches,
                 loops, JS injection, and delayed execution, plus a custom-field
                 type system, reporting framework with formulas, and Gantt/Kanban
