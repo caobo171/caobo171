@@ -278,8 +278,10 @@ export default function ResumePage() {
               <dd>
                 Multi-tenant SaaS architecture · PHP · TypeScript · Next.js ·
                 React Native (Expo) · MySQL · Redis · Socket.io · AI product dev
-                (Gemini, Imagen, wav2vec2) · Agent orchestration (LangChain,
-                CrewAI, Google ADK, Dify) · Automation engines · iOS/Android ·
+                (Gemini, Imagen, wav2vec2) · Conversational AI (voice and text
+                avatars) · Agent orchestration (LangChain, CrewAI, Google ADK,
+                Dify) · Automation engines · Enterprise LMS integration
+                (Workday, SAP SuccessFactors, Oracle, Litmos) · iOS/Android ·
                 Security review · System design
               </dd>
             </div>
