@@ -32,6 +32,7 @@ export interface Copy {
   raiseEachYear: string;
   ceiling: string;
   monthlyCap: string;
+  monthlyCapHelp: string;
   fixedAmount: string;
   perMonth: string;
 
@@ -126,8 +127,10 @@ const EN: Copy = {
   savePct: "I save",
   savePctValue: (p) => `${p}% of it`,
   raiseEachYear: "Raise each year",
-  ceiling: "…but never above",
-  monthlyCap: "…up to",
+  ceiling: "…but my salary never passes",
+  monthlyCap: "But I never save more than",
+  monthlyCapHelp:
+    "A ceiling on the amount put aside each month, not on the salary. If a quarter of your pay would come to more than this, the rest simply is not invested.",
   fixedAmount: "Every month I put aside",
   perMonth: "/mo",
 
@@ -264,8 +267,10 @@ const VI: Copy = {
   savePct: "Tôi để dành",
   savePctValue: (p) => `${p}% lương`,
   raiseEachYear: "Tăng lương mỗi năm",
-  ceiling: "…nhưng không vượt quá",
-  monthlyCap: "…và mỗi tháng tối đa",
+  ceiling: "…nhưng lương không vượt quá",
+  monthlyCap: "Nhưng mỗi tháng để dành tối đa",
+  monthlyCapHelp:
+    "Đây là trần cho số tiền để dành mỗi tháng, không phải trần lương. Nếu 25% lương vượt quá mức này thì phần dư không được đầu tư.",
   fixedAmount: "Mỗi tháng để dành",
   perMonth: "/tháng",
 

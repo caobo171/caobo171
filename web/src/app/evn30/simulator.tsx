@@ -412,19 +412,10 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
                   />
                 </Field>
 
-                <Field label={t.ceiling} value={`${plain(draft.salaryCeiling, lang)} ₫`}>
-                  <TextField.Root
-                    size="2"
-                    inputMode="numeric"
-                    aria-label={t.ceiling}
-                    value={plain(draft.salaryCeiling, lang)}
-                    onChange={(e) => set("salaryCeiling", digits(e.target.value))}
-                  />
-                </Field>
-
                 <Field
                   label={t.monthlyCap}
                   value={`${plain(draft.monthlyCapVnd, lang)} ₫${t.perMonth}`}
+                  help={t.monthlyCapHelp}
                 >
                   <A11ySlider
                     size="1"
@@ -436,6 +427,16 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
                     onValueChange={([v]) => set("monthlyCapVnd", v)}
                   />
                 </Field>
+                <Field label={t.ceiling} value={`${plain(draft.salaryCeiling, lang)} ₫`}>
+                  <TextField.Root
+                    size="2"
+                    inputMode="numeric"
+                    aria-label={t.ceiling}
+                    value={plain(draft.salaryCeiling, lang)}
+                    onChange={(e) => set("salaryCeiling", digits(e.target.value))}
+                  />
+                </Field>
+
               </>
             ) : (
               <Field label={t.fixedAmount} value={`${plain(draft.fixedAmount, lang)} ₫`}>
