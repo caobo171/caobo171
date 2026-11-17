@@ -57,8 +57,25 @@ export function Chart({
 
   const x = (i: number) => PAD.left + (i / (months.length - 1)) * PLOT_W;
   const y = (v: number) => PAD.top + (1 - v / max) * PLOT_H;
+  const point = (m: MonthPoint, i: number, pick: (m: MonthPoint) => number) =>
+    `${x(i).toFixed(1)},${y(pick(m)).toFixed(1)}`;
   const path = (pick: (m: MonthPoint) => number) =>
-    months.map((m, i) => `${x(i).toFixed(1)},${y(pick(m)).toFixed(1)}`).join(" ");
+    months.map((m, i) => point(m, i, pick)).join(" ");
+
+  // Where the observed prices stop and the assumption begins. The two halves
+  // overlap by one point so the line joins up.
+  const firstProjected = months.findIndex((m) => m.projected);
+  const solidPath = (pick: (m: MonthPoint) => number) =>
+    (firstProjected < 0 ? months : months.slice(0, firstProjected))
+      .map((m, i) => point(m, i, pick))
+      .join(" ");
+  const dashedPath = (pick: (m: MonthPoint) => number) =>
+    firstProjected < 1
+      ? ""
+      : months
+          .slice(firstProjected - 1)
+          .map((m, i) => point(m, firstProjected - 1 + i, pick))
+          .join(" ");
 
   const yearTicks = months
     .map((m, i) => ({ i, year: Number(m.month.slice(0, 4)), isJan: m.month.endsWith("-01") }))
@@ -151,15 +168,40 @@ export function Chart({
           strokeDasharray="4 3"
         />
         {SERIES.map((s) => (
-          <polyline
-            key={s.key}
-            points={path((m) => m[s.key])}
-            fill="none"
-            stroke={s.color}
-            strokeWidth={s.width}
-            strokeLinejoin="round"
-          />
+          <g key={s.key}>
+            <polyline
+              points={solidPath((m) => m[s.key])}
+              fill="none"
+              stroke={s.color}
+              strokeWidth={s.width}
+              strokeLinejoin="round"
+            />
+            {firstProjected > 0 && (
+              <polyline
+                points={dashedPath((m) => m[s.key])}
+                fill="none"
+                stroke={s.color}
+                strokeWidth={s.width}
+                strokeLinejoin="round"
+                strokeDasharray="5 4"
+                opacity="0.75"
+              />
+            )}
+          </g>
         ))}
+
+        {firstProjected > 0 && (
+          <line
+            x1={x(firstProjected - 1)}
+            x2={x(firstProjected - 1)}
+            y1={PAD.top}
+            y2={PAD.top + PLOT_H}
+            stroke="var(--amber-9)"
+            strokeWidth="1"
+            strokeDasharray="3 3"
+            opacity="0.7"
+          />
+        )}
 
         {hover !== null && (
           <g pointerEvents="none">

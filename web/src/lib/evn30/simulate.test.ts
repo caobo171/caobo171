@@ -62,6 +62,56 @@ describe("simulate", () => {
     expect(channel(r, "bank").xirr).toBeLessThan(0.058);
   });
 
+  test("invests capital you already have, at the start", () => {
+    const none = simulate(snapshot, DEFAULT_INPUTS);
+    const some = simulate(snapshot, { ...DEFAULT_INPUTS, initialCapital: 100_000_000 });
+
+    expect(none.paidIn).toBeCloseTo(some.paidIn - 100_000_000, 0);
+    for (const key of ["gold", "etf", "bank"] as const) {
+      const before = none.channels.find((c) => c.key === key)!;
+      const after = some.channels.find((c) => c.key === key)!;
+      expect(after.value).toBeGreaterThan(before.value);
+    }
+    // It buys units rather than sitting as cash.
+    expect(some.channels.find((c) => c.key === "etf")!.units).toBeGreaterThan(
+      none.channels.find((c) => c.key === "etf")!.units,
+    );
+    expect(some.months[0].paidIn).toBeCloseTo(none.months[0].paidIn + 100_000_000, 0);
+  });
+
+  test("capital you already have defaults to nothing", () => {
+    expect(DEFAULT_INPUTS.initialCapital).toBe(0);
+  });
+
+  test("a backtest claims no projection", () => {
+    const r = simulate(snapshot, DEFAULT_INPUTS);
+    expect(r.projectedFrom).toBeNull();
+    expect(r.assumedAnnual).toBeNull();
+    expect(r.months.every((m) => !m.projected)).toBe(true);
+  });
+
+  test("projects past the data at a fitted growth rate, and flags every assumed month", () => {
+    const lastReal = snapshot.months[snapshot.months.length - 1].month;
+    const r = simulate(snapshot, { ...DEFAULT_INPUTS, endMonth: "2030-12" });
+
+    expect(r.months[r.months.length - 1].month).toBe("2030-12");
+    expect(r.projectedFrom).not.toBeNull();
+    expect(r.projectedFrom! > lastReal).toBe(true);
+    expect(r.months.filter((m) => !m.projected).every((m) => m.month <= lastReal)).toBe(true);
+    expect(r.months.filter((m) => m.projected).every((m) => m.month > lastReal)).toBe(true);
+
+    // The assumption is reported so the page can show it rather than hide it.
+    expect(r.assumedAnnual!.etf).toBeGreaterThan(0);
+    expect(r.assumedAnnual!.gold).toBeGreaterThan(0);
+    for (const c of r.channels) expect(Number.isFinite(c.xirr)).toBe(true);
+  });
+
+  test("an end month inside the data simply stops there", () => {
+    const r = simulate(snapshot, { ...DEFAULT_INPUTS, endMonth: "2020-06" });
+    expect(r.months[r.months.length - 1].month).toBe("2020-06");
+    expect(r.projectedFrom).toBeNull();
+  });
+
   test("orders channels by return, best first", () => {
     const r = simulate(snapshot, DEFAULT_INPUTS);
     expect(r.channels.map((c) => c.key)).toEqual(["gold", "etf", "bank"]);
@@ -166,8 +216,10 @@ describe("simulate", () => {
     const r = simulate(thin, DEFAULT_INPUTS);
     expect(Number.isFinite(channel(r, "bank").value)).toBe(true);
     expect(channel(r, "bank").value).toBeGreaterThan(r.paidIn);
-    expect(r.inflationFactor).toBe(1);
-    expect(r.paidInToday).toBeCloseTo(r.paidIn, 0);
+    // Past the last published year, inflation is carried forward at 3.3% rather
+    // than silently stopping — ten years from a 2016-only table is 1.033^10.
+    expect(r.inflationFactor).toBeCloseTo(1.033 ** 10, 3);
+    expect(r.paidInToday).toBeGreaterThan(r.paidIn);
   });
 
   test("every month point carries a cumulative paid-in and three values", () => {

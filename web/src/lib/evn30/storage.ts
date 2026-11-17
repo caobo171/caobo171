@@ -3,13 +3,14 @@ import { DEFAULT_INPUTS } from "./simulate";
 import type { Inputs, SavingMode } from "./types";
 
 /** Versioned, so a later change to Inputs cannot resurrect an incompatible shape. */
-export const STORAGE_KEY = "evn30:inputs:v3";
+export const STORAGE_KEY = "evn30:inputs:v4";
 
 const MODES: SavingMode[] = ["percent", "fixed"];
 
 /** Matches the ranges the controls allow, so a stored value cannot exceed them. */
 const BOUNDS = {
   salaryStart: [0, 10_000_000_000],
+  initialCapital: [0, 1_000_000_000_000],
   raisePct: [0, 20],
   salaryCeiling: [0, 10_000_000_000],
   savePct: [0, 100],
@@ -46,6 +47,13 @@ export function parseInputs(raw: string | null): Inputs | null {
       typeof o.startMonth === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(o.startMonth)
         ? o.startMonth
         : DEFAULT_INPUTS.startMonth,
+    // Empty is meaningful here: it means "run to the end of the data".
+    endMonth:
+      o.endMonth === "" ||
+      (typeof o.endMonth === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(o.endMonth))
+        ? o.endMonth
+        : DEFAULT_INPUTS.endMonth,
+    initialCapital: num(o.initialCapital, "initialCapital"),
     mode: MODES.includes(o.mode as SavingMode) ? (o.mode as SavingMode) : DEFAULT_INPUTS.mode,
     salaryStart: num(o.salaryStart, "salaryStart"),
     raisePct: num(o.raisePct, "raisePct"),

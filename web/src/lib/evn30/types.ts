@@ -36,6 +36,11 @@ export interface Snapshot {
 export interface Inputs {
   /** Inclusive first month of the plan, "YYYY-MM". */
   startMonth: string;
+  /** Inclusive last month. Empty means "as far as the data goes"; a month past
+   *  the data projects forward on an assumed growth rate. */
+  endMonth: string;
+  /** Money already saved before the plan starts, in VND. */
+  initialCapital: number;
   mode: SavingMode;
   /** Monthly salary in the first month of the plan, in VND. */
   salaryStart: number;
@@ -50,6 +55,8 @@ export interface Inputs {
 
 export interface MonthPoint {
   month: string;
+  /** True once the prices behind this point are assumed rather than observed. */
+  projected: boolean;
   /** What one fund unit cost that month, in VND. */
   etfPrice: number;
   /** What one lượng of gold cost to buy that month, in VND. */
@@ -93,6 +100,10 @@ export interface SimulationResult {
   lastContribution: number;
   /** Total brokerage paid buying the ETF, in VND. */
   etfFees: number;
+  /** First month whose prices are assumed, or null for a pure backtest. */
+  projectedFrom: string | null;
+  /** The annual growth assumed beyond the data, per channel. */
+  assumedAnnual: Record<ChannelKey, number> | null;
   /** Best return first. */
   channels: ChannelResult[];
 }

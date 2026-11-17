@@ -4,6 +4,7 @@ import {
   Badge,
   Box,
   Button,
+  Callout,
   Card,
   Container,
   Flex,
@@ -11,6 +12,7 @@ import {
   Heading,
   Link as RadixLink,
   SegmentedControl,
+  Select,
   Separator,
   Slider,
   Table,
@@ -22,7 +24,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import { GITHUB, WELE } from "@/app/links";
-import { COPY, LANGS, type Lang } from "@/lib/evn30/copy";
+import { COPY, LANGS, type Copy, type Lang } from "@/lib/evn30/copy";
 import { dayName, money, monthName, percent, plain, signedMoney, tael } from "@/lib/evn30/format";
 import { DEFAULT_INPUTS, simulate } from "@/lib/evn30/simulate";
 import {
@@ -79,6 +81,52 @@ function Field({
       </Flex>
       {children}
     </Box>
+  );
+}
+
+const MONTHS = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+
+function MonthYearPicker({
+  value,
+  years,
+  min,
+  max,
+  onChange,
+  t,
+}: {
+  value: string;
+  years: number[];
+  min: string;
+  max: string;
+  onChange: (month: string) => void;
+  t: Copy;
+}) {
+  const [year, month] = value.split("-");
+  const clamp = (v: string) => (v < min ? min : v > max ? max : v);
+
+  return (
+    <Flex gap="2">
+      <Select.Root value={month} onValueChange={(m) => onChange(clamp(`${year}-${m}`))}>
+        <Select.Trigger aria-label={t.monthLabel} style={{ flex: 1 }} />
+        <Select.Content position="popper">
+          {MONTHS.map((m) => (
+            <Select.Item key={m} value={m}>
+              {`${t.monthLabel} ${Number(m)}`}
+            </Select.Item>
+          ))}
+        </Select.Content>
+      </Select.Root>
+      <Select.Root value={year} onValueChange={(y) => onChange(clamp(`${y}-${month}`))}>
+        <Select.Trigger aria-label={t.yearLabel} style={{ flex: 1 }} />
+        <Select.Content position="popper">
+          {years.map((y) => (
+            <Select.Item key={y} value={String(y)}>
+              {y}
+            </Select.Item>
+          ))}
+        </Select.Content>
+      </Select.Root>
+    </Flex>
   );
 }
 
@@ -141,13 +189,22 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
 
   const percentMode = draft.mode === "percent";
   const winner = result.channels[0];
-  const priced = dayName(snapshot.latest.date, lang);
 
-  // The slider indexes the snapshot's own months, so it can never point outside
-  // the data however the stored value was edited.
-  const maxIndex = Math.max(0, snapshot.months.length - MIN_MONTHS);
-  const foundIndex = snapshot.months.findIndex((m) => m.month === draft.startMonth);
-  const startIndex = Math.min(maxIndex, foundIndex < 0 ? 0 : foundIndex);
+  // Start options come from the data; end options run years past it, because a
+  // reader may want to carry the plan forward.
+  const startable = snapshot.months.slice(0, Math.max(1, snapshot.months.length - MIN_MONTHS + 1));
+  const firstMonth = startable[0].month;
+  const lastStartable = startable[startable.length - 1].month;
+  const lastRealMonth = snapshot.months[snapshot.months.length - 1].month;
+  const startYears = [...new Set(startable.map((m) => Number(m.month.slice(0, 4))))];
+  const lastRealYear = Number(lastRealMonth.slice(0, 4));
+  const endYears = [...new Set(snapshot.months.map((m) => Number(m.month.slice(0, 4))))];
+  for (let y = lastRealYear + 1; y <= lastRealYear + 20; y++) endYears.push(y);
+
+  // A projected run is not "priced" on any real date — it ends on an assumed one.
+  const priced = result.projectedFrom
+    ? monthName(result.months[result.months.length - 1]?.month ?? lastRealMonth, lang)
+    : dayName(snapshot.latest.date, lang);
 
   const holding = (key: ChannelKey, units: number) =>
     key === "gold" ? tael(units, lang) : key === "etf" ? t.fundUnits(plain(units, lang)) : t.bankHolding;
@@ -216,14 +273,31 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
               label={t.startingFrom}
               value={`${monthName(draft.startMonth, lang)} · ${t.windowLength(preview.months.length)}`}
             >
-              <A11ySlider
-                size="1"
-                label={t.startingFrom}
-                value={[startIndex]}
-                min={0}
-                max={maxIndex}
-                step={1}
-                onValueChange={([v]) => set("startMonth", snapshot.months[v].month)}
+              <MonthYearPicker
+                value={draft.startMonth}
+                years={startYears}
+                min={firstMonth}
+                max={lastStartable}
+                onChange={(m) => set("startMonth", m)}
+                t={t}
+              />
+            </Field>
+
+            <Field
+              label={t.endingAt}
+              value={
+                draft.endMonth
+                  ? monthName(draft.endMonth, lang)
+                  : `${monthName(lastRealMonth, lang)} · ${t.toLatest}`
+              }
+            >
+              <MonthYearPicker
+                value={draft.endMonth || lastRealMonth}
+                years={endYears}
+                min={draft.startMonth}
+                max={`${endYears[endYears.length - 1]}-12`}
+                onChange={(m) => set("endMonth", m === lastRealMonth ? "" : m)}
+                t={t}
               />
             </Field>
 
@@ -240,6 +314,16 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
                 <SegmentedControl.Item value="fixed">{t.modeFixed}</SegmentedControl.Item>
               </SegmentedControl.Root>
             </Box>
+
+            <Field label={t.initialCapital} value={`${plain(draft.initialCapital, lang)} ₫`}>
+              <TextField.Root
+                size="2"
+                inputMode="numeric"
+                aria-label={t.initialCapital}
+                value={plain(draft.initialCapital, lang)}
+                onChange={(e) => set("initialCapital", digits(e.target.value))}
+              />
+            </Field>
 
             {percentMode ? (
               <>
@@ -353,6 +437,19 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
             <Stat label={t.pricedLabel} value={priced} />
           </Flex>
         </Card>
+
+        {result.projectedFrom && result.assumedAnnual ? (
+          <Callout.Root color="amber" mb="4">
+            <Callout.Text>
+              {t.projectionNote(
+                monthName(result.projectedFrom, lang),
+                percent(result.assumedAnnual.etf, 1, lang),
+                percent(result.assumedAnnual.gold, 1, lang),
+                percent(result.assumedAnnual.bank, 1, lang),
+              )}
+            </Callout.Text>
+          </Callout.Root>
+        ) : null}
 
         <Grid columns={{ initial: "1", sm: "3" }} gap="3" mb="4">
           {result.channels.map((c) => (

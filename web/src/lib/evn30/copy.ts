@@ -12,6 +12,13 @@ export interface Copy {
   subtitle: string;
 
   startingFrom: string;
+  endingAt: string;
+  toLatest: string;
+  monthLabel: string;
+  yearLabel: string;
+  initialCapital: string;
+  projectedBadge: string;
+  projectionNote: (from: string, etf: string, gold: string, bank: string) => string;
   windowLength: (months: number) => string;
   iSaveLabel: string;
   modePercent: string;
@@ -95,6 +102,14 @@ const EN: Copy = {
     "A share of every paycheque, every month, into three places Vietnamese savers actually use. Real prices, real inflation, real fees — and the cash that could not buy a whole lot stays cash.",
 
   startingFrom: "Starting from",
+  endingAt: "Running until",
+  toLatest: "today's prices",
+  monthLabel: "Month",
+  yearLabel: "Year",
+  initialCapital: "Capital I already have",
+  projectedBadge: "Assumed from here on",
+  projectionNote: (from, etf, gold, bank) =>
+    `From ${from} onwards there are no prices yet, so the page assumes each channel carries on at the rate it managed over the period you chose — ETF ${etf}, gold ${gold}, bank ${bank} a year, fitted by least squares through every month. That is an assumption, not a forecast, and the dashed part of the chart is where it begins.`,
   windowLength: (m) => (m === 1 ? "1 month" : `${m} months`),
   iSaveLabel: "I save",
   modePercent: "a share of salary",
@@ -218,6 +233,14 @@ const VI: Copy = {
     "Một phần lương mỗi tháng, đổ vào ba kênh người Việt thực sự dùng. Giá thật, lạm phát thật, phí thật — và tiền chưa đủ mua trọn một lô thì vẫn nằm đó là tiền mặt.",
 
   startingFrom: "Bắt đầu từ",
+  endingAt: "Chạy đến",
+  toLatest: "giá hôm nay",
+  monthLabel: "Tháng",
+  yearLabel: "Năm",
+  initialCapital: "Vốn hiện có",
+  projectedBadge: "Từ đây trở đi là giả định",
+  projectionNote: (from, etf, gold, bank) =>
+    `Từ ${from} trở đi chưa có giá thật, nên trang giả định mỗi kênh tiếp tục tăng đúng bằng tốc độ nó đạt được trong khoảng bạn chọn — ETF ${etf}, vàng ${gold}, tiết kiệm ${bank} mỗi năm, khớp bằng hồi quy bình phương nhỏ nhất qua tất cả các tháng. Đây là giả định, không phải dự báo, và phần nét đứt trên biểu đồ là chỗ nó bắt đầu.`,
   windowLength: (m) => `${m} tháng`,
   iSaveLabel: "Tôi để dành",
   modePercent: "theo % lương",

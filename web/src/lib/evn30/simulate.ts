@@ -5,6 +5,7 @@ import type {
   MonthPoint,
   SimulationResult,
   Snapshot,
+  SnapshotMonth,
 } from "./types";
 
 /** HOSE trades E1VFVN30 in lots of 100 units; an odd amount cannot be bought. */
@@ -16,6 +17,8 @@ export const CHI_PER_TAEL = 10;
 
 export const DEFAULT_INPUTS: Inputs = {
   startMonth: "2016-01",
+  endMonth: "",
+  initialCapital: 0,
   mode: "percent",
   salaryStart: 18_750_000,
   raisePct: 8,
@@ -72,9 +75,91 @@ function deepestFall(values: number[]): number {
 
 const dayNumber = (isoDate: string) => Date.parse(`${isoDate}T00:00:00Z`) / 86_400_000;
 
+
+/**
+ * Least-squares fit of ln(price) against time, which is the growth rate that
+ * best explains every month rather than just the first and last. Returns the
+ * monthly growth factor.
+ */
+function logLinearMonthlyGrowth(values: number[]): number {
+  const points = values.map((v, i) => [i, Math.log(v)]).filter(([, y]) => Number.isFinite(y));
+  const n = points.length;
+  if (n < 2) return 1;
+  const meanX = points.reduce((a, [x]) => a + x, 0) / n;
+  const meanY = points.reduce((a, [, y]) => a + y, 0) / n;
+  let num = 0;
+  let den = 0;
+  for (const [x, y] of points) {
+    num += (x - meanX) * (y - meanY);
+    den += (x - meanX) ** 2;
+  }
+  if (den === 0) return 1;
+  return Math.exp(num / den);
+}
+
+const nextMonth = (month: string): string => {
+  let [y, m] = month.split("-").map(Number);
+  if (++m === 13) {
+    m = 1;
+    y += 1;
+  }
+  return `${y}-${String(m).padStart(2, "0")}`;
+};
+
+type Row = SnapshotMonth & { projected: boolean };
+
+/**
+ * The months the plan runs over. Anything past the data is synthesised by
+ * continuing each price at its fitted growth rate — an assumption, flagged as
+ * one, never presented as history.
+ */
+function buildRows(snapshot: Snapshot, startMonth: string, endMonth: string): Row[] {
+  const history: Row[] = snapshot.months
+    .filter((m) => m.month >= startMonth && (!endMonth || m.month <= endMonth))
+    .map((m) => ({ ...m, projected: false }));
+
+  const lastReal = snapshot.months[snapshot.months.length - 1];
+  if (!endMonth || endMonth <= lastReal.month || !history.length) return history;
+
+  // Fit on the window the reader actually chose, so the assumption reflects the
+  // period they are looking at.
+  const basis = snapshot.months.filter((m) => m.month >= startMonth);
+  const etfGrowth = logLinearMonthlyGrowth(basis.map((m) => m.etf));
+  const goldGrowth = logLinearMonthlyGrowth(basis.map((m) => m.goldBuy));
+  const spread = lastReal.goldSell / lastReal.goldBuy;
+
+  const rows = [...history];
+  let month = nextMonth(lastReal.month);
+  let step = 1;
+  while (month <= endMonth) {
+    const goldBuy = lastReal.goldBuy * goldGrowth ** step;
+    rows.push({
+      month,
+      date: `${month}-01`,
+      etf: lastReal.etf * etfGrowth ** step,
+      goldBuy,
+      goldSell: goldBuy * spread,
+      projected: true,
+    });
+    month = nextMonth(month);
+    step += 1;
+  }
+  return rows;
+}
+
+/** Prices keep rising after the last published CPI, so carry inflation forward. */
+function cpiFor(cpi: Record<string, number>, year: number): number {
+  const years = Object.keys(cpi)
+    .map(Number)
+    .sort((a, b) => a - b);
+  if (!years.length) return 1;
+  const last = years[years.length - 1];
+  if (year <= last) return rateFor(cpi, year);
+  return cpi[String(last)] * 1.033 ** (year - last);
+}
+
 export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
-  // "YYYY-MM" strings compare correctly, so no date parsing is needed here.
-  const rows = snapshot.months.filter((m) => m.month >= inputs.startMonth);
+  const rows = buildRows(snapshot, inputs.startMonth, inputs.endMonth);
 
   const empty: SimulationResult = {
     months: [],
@@ -87,6 +172,8 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
     firstContribution: 0,
     lastContribution: 0,
     etfFees: 0,
+    projectedFrom: null,
+    assumedAnnual: null,
     channels: [],
   };
   if (!rows.length) return empty;
@@ -113,6 +200,17 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
 
   const months: MonthPoint[] = [];
   const flows: Array<{ day: number; amount: number }> = [];
+
+  // Money already saved before the plan starts, put to work in the first month
+  // under the same lot and spread rules as everything else.
+  const seed = Math.max(0, inputs.initialCapital);
+  if (seed > 0) {
+    etfCash += seed;
+    goldCash += seed;
+    bank += seed;
+    paidIn += seed;
+    flows.push({ day: dayNumber(rows[0].date), amount: seed });
+  }
 
   rows.forEach((row, i) => {
     const year = Number(row.month.slice(0, 4));
@@ -167,6 +265,7 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
 
     months.push({
       month: row.month,
+      projected: row.projected,
       etfPrice: row.etf * 1000,
       goldPrice: row.goldSell * 1000,
       contribution,
@@ -177,32 +276,39 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
     });
   });
 
-  const { latest } = snapshot;
-  const endDay = dayNumber(latest.date);
-  const endYear = Number(latest.date.slice(0, 4));
-  const cpiEnd = rateFor(snapshot.cpi, endYear);
-  const cpiStart = rateFor(snapshot.cpi, Number(rows[0].month.slice(0, 4)));
+  const lastRow = rows[rows.length - 1];
+  const isProjection = lastRow.projected;
 
-  let paidInToday = 0;
+  // A run that ends in the future is valued at its own last (assumed) prices;
+  // one that ends today is valued at the latest real quote.
+  const endPrices = isProjection
+    ? { date: lastRow.date, etf: lastRow.etf, goldBuy: lastRow.goldBuy, goldSell: lastRow.goldSell }
+    : snapshot.latest;
+  const endDay = dayNumber(endPrices.date);
+  const endYear = Number(endPrices.date.slice(0, 4));
+  const cpiEnd = cpiFor(snapshot.cpi, endYear);
+  const cpiStart = cpiFor(snapshot.cpi, Number(rows[0].month.slice(0, 4)));
+
+  let paidInToday = seed * (cpiEnd / cpiStart);
   rows.forEach((row, i) => {
     paidInToday +=
-      months[i].contribution * (cpiEnd / rateFor(snapshot.cpi, Number(row.month.slice(0, 4))));
+      months[i].contribution * (cpiEnd / cpiFor(snapshot.cpi, Number(row.month.slice(0, 4))));
   });
 
   const finals: Record<ChannelKey, number> = {
-    gold: (goldChi * latest.goldBuy * 1000) / CHI_PER_TAEL + goldCash,
-    etf: etfUnits * latest.etf * 1000 + etfCash,
+    gold: (goldChi * endPrices.goldBuy * 1000) / CHI_PER_TAEL + goldCash,
+    etf: etfUnits * endPrices.etf * 1000 + etfCash,
     bank,
   };
 
   // The final month row was priced at that month's first trading day. Restate it
-  // at today's prices so the chart ends exactly where the headline figures do.
+  // at the closing prices so the chart ends exactly where the headline does.
   const lastPoint = months[months.length - 1];
   lastPoint.gold = finals.gold;
   lastPoint.etf = finals.etf;
   lastPoint.bank = finals.bank;
-  lastPoint.etfPrice = latest.etf * 1000;
-  lastPoint.goldPrice = latest.goldSell * 1000;
+  lastPoint.etfPrice = endPrices.etf * 1000;
+  lastPoint.goldPrice = endPrices.goldSell * 1000;
 
   const extras: Record<ChannelKey, { idleCash: number; units: number; monthsBought: number }> = {
     gold: { idleCash: goldCash, units: goldChi, monthsBought: goldMonths },
@@ -241,6 +347,19 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
     salaryStart,
     salaryEnd: salaryAt(lastYearIndex),
     ceilingYear,
+    projectedFrom: isProjection ? (months.find((m) => m.projected)?.month ?? null) : null,
+    assumedAnnual: isProjection
+      ? {
+          etf: logLinearMonthlyGrowth(
+            snapshot.months.filter((m) => m.month >= inputs.startMonth).map((m) => m.etf),
+          ) ** 12 - 1,
+          gold:
+            logLinearMonthlyGrowth(
+              snapshot.months.filter((m) => m.month >= inputs.startMonth).map((m) => m.goldBuy),
+            ) ** 12 - 1,
+          bank: rateFor(snapshot.deposit, endYear) / 100,
+        }
+      : null,
     firstContribution: months[0].contribution,
     lastContribution: months[months.length - 1].contribution,
     etfFees,
