@@ -65,6 +65,7 @@ export interface Copy {
   tabSources: string;
 
   thChannel: string;
+  thNetWorth: string;
   thHolding: string;
   thBoughtIn: string;
   thIdleCash: string;
@@ -171,6 +172,7 @@ const EN: Copy = {
   tabSources: "Where the numbers come from",
 
   thChannel: "Channel",
+  thNetWorth: "Net worth at the end",
   thHolding: "Holding",
   thBoughtIn: "Bought in",
   thIdleCash: "Idle cash",
@@ -316,6 +318,7 @@ const VI: Copy = {
   tabSources: "Số liệu lấy từ đâu",
 
   thChannel: "Kênh",
+  thNetWorth: "Giá trị danh mục cuối kỳ",
   thHolding: "Đang nắm giữ",
   thBoughtIn: "Số tháng mua được",
   thIdleCash: "Tiền mặt còn dư",

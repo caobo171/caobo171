@@ -597,6 +597,7 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
                 <Table.Header>
                   <Table.Row>
                     <Table.ColumnHeaderCell>{t.thChannel}</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>{t.thNetWorth}</Table.ColumnHeaderCell>
                     <Table.ColumnHeaderCell>{t.thHolding}</Table.ColumnHeaderCell>
                     <Table.ColumnHeaderCell>{t.thBoughtIn}</Table.ColumnHeaderCell>
                     <Table.ColumnHeaderCell>{t.thIdleCash}</Table.ColumnHeaderCell>
@@ -613,6 +614,14 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
                   {result.channels.map((c) => (
                     <Table.Row key={c.key}>
                       <Table.RowHeaderCell>{t[c.key]}</Table.RowHeaderCell>
+                      <Table.Cell>
+                        <Text as="div" weight="medium">
+                          {money(c.value, lang)}
+                        </Text>
+                        <Text as="div" size="1" color="gray">
+                          {t.inTodaysMoney(money(c.realValue, lang))}
+                        </Text>
+                      </Table.Cell>
                       <Table.Cell>{holding(c.key, c.units)}</Table.Cell>
                       <Table.Cell>{t.ofMonths(c.monthsBought, result.months.length)}</Table.Cell>
                       <Table.Cell>{money(c.idleCash, lang)}</Table.Cell>
