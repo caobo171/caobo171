@@ -1,7 +1,14 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { DEFAULT_INPUTS } from "./simulate";
-import { loadInputs, parseInputs, parseLang, saveInputs, STORAGE_KEY } from "./storage";
+import {
+  loadInputs,
+  parseInputs,
+  parseLang,
+  parseTheme,
+  saveInputs,
+  STORAGE_KEY,
+} from "./storage";
 import type { Inputs } from "./types";
 
 /** Minimal stand-in; the node test environment has no localStorage. */
@@ -191,5 +198,22 @@ describe("parseInputs — milestones", () => {
   test("caps how many milestones a hand-edited blob can define", () => {
     const many = Array.from({ length: 50 }, (_, i) => ({ ...ok, id: `m${i}` }));
     expect(withMilestones(many)!.milestones.length).toBeLessThanOrEqual(12);
+  });
+});
+
+describe("parseTheme", () => {
+  test("keeps a choice the reader actually made", () => {
+    expect(parseTheme("dark")).toBe("dark");
+    expect(parseTheme("light")).toBe("light");
+    expect(parseTheme("system")).toBe("system");
+  });
+
+  test("falls back to following the system for anything else", () => {
+    // Includes the case that matters: nothing stored, because nobody has
+    // touched the control yet.
+    expect(parseTheme(null)).toBe("system");
+    expect(parseTheme("")).toBe("system");
+    expect(parseTheme("DARK")).toBe("system");
+    expect(parseTheme('{"theme":"dark"}')).toBe("system");
   });
 });

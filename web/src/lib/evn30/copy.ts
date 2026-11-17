@@ -4,6 +4,9 @@ export const LANGS: Lang[] = ["vi", "en"];
 
 export interface Copy {
   langName: string;
+  themeAuto: string;
+  themeLight: string;
+  themeDark: string;
 
   home: string;
   resume: string;
@@ -79,6 +82,7 @@ export interface Copy {
   mYears: string;
   mYearsForever: string;
   mOutsideRun: string;
+  milestonesOutside: (names: string, until: string) => string;
   presetHouse: string;
   presetCar: string;
   presetChild: string;
@@ -94,6 +98,7 @@ export interface Copy {
 
   tabSummary: string;
   tabMonths: string;
+  tabMethod: string;
   tabSources: string;
 
   thChannel: string;
@@ -135,6 +140,9 @@ export interface Copy {
 
 const EN: Copy = {
   langName: "English",
+  themeAuto: "Follow my system",
+  themeLight: "Light",
+  themeDark: "Dark",
   home: "Home",
   resume: "Resume",
 
@@ -170,9 +178,9 @@ const EN: Copy = {
   fixedAmount: "Every month I put aside",
   perMonth: "/mo",
 
-  contribFlat: (a) => `That's ${a} a month, every month.`,
+  contribFlat: (a) => `That puts ${a} a month into the plan, every month.`,
   contribRising: (first, last, year) =>
-    `That's ${first}/month at the start, rising to ${last}${
+    `That puts ${first}/month into the plan at the start, rising to ${last}${
       year ? ` once the ceiling bites in ${year}` : ""
     }.`,
   apply: "Apply",
@@ -223,6 +231,8 @@ const EN: Copy = {
   mYears: "For",
   mYearsForever: "to the end",
   mOutsideRun: "outside the run",
+  milestonesOutside: (names, until) =>
+    `${names} falls after this run ends (${until}), so nothing has been charged for it. Set “Running until” to that year or later to see what it does.`,
   presetHouse: "House",
   presetCar: "Car",
   presetChild: "Child",
@@ -239,6 +249,7 @@ const EN: Copy = {
 
   tabSummary: "Summary",
   tabMonths: "Month by month",
+  tabMethod: "How it is worked out",
   tabSources: "Where the numbers come from",
 
   thChannel: "Channel",
@@ -306,11 +317,9 @@ const EN: Copy = {
   thRate: "Annual rate, 12-month VND deposit",
   chargesHeading: "What the model charges you",
   charges: [
-    "The ETF trades in lots of 100 units. A month that cannot afford a lot buys nothing and the cash waits. Brokerage of 0.15% is charged on every purchase. Selling costs are not charged, because nothing is sold.",
+    "The ETF trades in lots of 100 units. A month that cannot afford a lot buys nothing and the cash waits. Brokerage of 0.15% is charged on every purchase, and on every sale a milestone forces.",
     "Gold is bought at the shop's selling price and valued at its buying price, so the spread is a real cost. It is bought in whole chỉ, and one chỉ now costs more than many months' saving.",
     "The bank compounds monthly at the twelfth root of that year's rate, so a deposit quoted at 6.5% pays 6.5% over the year rather than 6.7%. It takes any amount, so it is the only channel that never leaves money idle.",
-    "Returns are money-weighted (XIRR), not total profit divided by what you put in — money that arrived last year has not had ten years to work.",
-    "“Deepest fall” is the worst drop of the pot from its own peak, not of the asset's price. Ongoing contributions cushion it, which is why the bank always reads zero.",
   ],
   notHeading: "What it does not do",
   notBody:
@@ -319,6 +328,9 @@ const EN: Copy = {
 
 const VI: Copy = {
   langName: "Tiếng Việt",
+  themeAuto: "Theo máy",
+  themeLight: "Sáng",
+  themeDark: "Tối",
   home: "Trang chủ",
   resume: "Hồ sơ",
 
@@ -354,9 +366,9 @@ const VI: Copy = {
   fixedAmount: "Mỗi tháng để dành",
   perMonth: "/tháng",
 
-  contribFlat: (a) => `Tức là ${a} mỗi tháng, đều đặn.`,
+  contribFlat: (a) => `Tức là để dành ${a} mỗi tháng, đều đặn.`,
   contribRising: (first, last, year) =>
-    `Tức là ${first}/tháng lúc đầu, tăng dần lên ${last}${
+    `Tức là để dành ${first}/tháng lúc đầu, tăng dần lên ${last}${
       year ? `, chạm trần vào năm ${year}` : ""
     }.`,
   apply: "Áp dụng",
@@ -407,6 +419,8 @@ const VI: Copy = {
   mYears: "Trong",
   mYearsForever: "đến hết",
   mOutsideRun: "ngoài kỳ tính",
+  milestonesOutside: (names, until) =>
+    `${names} nằm sau khi kỳ tính kết thúc (${until}), nên chưa có khoản nào bị trừ. Đổi “Chạy đến” sang năm đó hoặc muộn hơn để thấy nó ảnh hưởng thế nào.`,
   presetHouse: "Nhà",
   presetCar: "Xe",
   presetChild: "Con",
@@ -423,6 +437,7 @@ const VI: Copy = {
 
   tabSummary: "Tổng quan",
   tabMonths: "Từng tháng",
+  tabMethod: "Cách tính",
   tabSources: "Số liệu lấy từ đâu",
 
   thChannel: "Kênh",
@@ -490,11 +505,9 @@ const VI: Copy = {
   thRate: "Lãi suất năm, gửi VND kỳ hạn 12 tháng",
   chargesHeading: "Mô hình tính những chi phí nào",
   charges: [
-    "ETF giao dịch theo lô 100 chứng chỉ. Tháng nào chưa đủ tiền mua trọn một lô thì không mua gì, tiền chờ sang tháng sau. Mỗi lần mua chịu phí môi giới 0,15%. Không tính phí bán, vì mô hình không bán ra.",
+    "ETF giao dịch theo lô 100 chứng chỉ. Tháng nào chưa đủ tiền mua trọn một lô thì không mua gì, tiền chờ sang tháng sau. Phí môi giới 0,15% tính cho mỗi lần mua, và cho cả mỗi lần bán mà dấu mốc buộc phải bán.",
     "Vàng mua theo giá bán của tiệm và định giá theo giá mua, nên chênh lệch mua–bán là chi phí thật. Vàng mua theo chỉ nguyên, và một chỉ bây giờ đắt hơn số tiền để dành của nhiều tháng cộng lại.",
     "Tiết kiệm nhập lãi hằng tháng theo căn bậc mười hai của lãi suất năm đó, nên mức niêm yết 6,5% trả đúng 6,5% một năm chứ không thành 6,7%. Ngân hàng nhận mọi số tiền, nên đây là kênh duy nhất không bao giờ để tiền nằm không.",
-    "Lợi suất tính theo dòng tiền (XIRR), không phải lấy tổng lãi chia cho vốn — tiền mới bỏ vào năm ngoái chưa có mười năm để sinh lời.",
-    "“Mức sụt sâu nhất” là mức giảm mạnh nhất của danh mục so với đỉnh của chính nó, không phải của giá tài sản. Tiền nạp đều đặn làm dịu con số này, nên cột của tiết kiệm luôn bằng 0.",
   ],
   notHeading: "Trang này không làm gì",
   notBody:

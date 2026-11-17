@@ -162,6 +162,39 @@ export function saveInputs(inputs: Inputs): void {
   }
 }
 
+/**
+ * Light or dark, remembered separately again. "system" is the default and the
+ * way back: a two-way toggle would strand anyone who tapped it once, with no
+ * way to go back to following the machine.
+ */
+export type ThemeChoice = "system" | "light" | "dark";
+export const THEME_KEY = "evn30:theme:v1";
+
+export function parseTheme(raw: string | null): ThemeChoice {
+  return raw === "dark" || raw === "light" || raw === "system" ? raw : "system";
+}
+
+export function readStoredThemeRaw(): string | null {
+  try {
+    return window.localStorage.getItem(THEME_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/** Prerender cannot know, and must not guess, or the markup mismatches. */
+export function readServerThemeRaw(): null {
+  return null;
+}
+
+export function saveTheme(choice: ThemeChoice): void {
+  try {
+    window.localStorage.setItem(THEME_KEY, choice);
+  } catch {
+    /* nothing worth telling the reader */
+  }
+}
+
 /** The reader's language is remembered separately from the scenario. */
 export const LANG_KEY = "evn30:lang:v1";
 

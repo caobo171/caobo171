@@ -43,7 +43,9 @@ import {
 import type { ChannelKey, Inputs, Milestone, Snapshot } from "@/lib/evn30/types";
 
 import { Chart } from "./chart";
+import { Methodology } from "./methodology";
 import { Sources } from "./sources";
+import { ThemeToggle } from "./theme";
 
 /** How long a run to open up when the reader moves the start past the end. */
 const DEFAULT_RUN_MONTHS = 12;
@@ -398,6 +400,10 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
     ]);
   };
   const full = draft.milestones.length >= MAX_MILESTONES;
+  // A milestone dated past the end of the run is silently never charged. The
+  // amber marker on its own row was too quiet: a reader sets one for 2030 and
+  // then goes looking for a cost that is never going to appear.
+  const outside = draft.milestones.filter((m) => m.year > lastRunYear);
   const hasMilestones = result.milestoneTotal > 0;
 
   // A projected run is not "priced" on any real date — it ends on an assumed one.
@@ -461,6 +467,7 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
                   </SegmentedControl.Item>
                 ))}
               </SegmentedControl.Root>
+              <ThemeToggle copy={t} />
             </Flex>
           </Flex>
         </Container>
@@ -675,6 +682,19 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
             </Text>
           ) : null}
 
+          {outside.length ? (
+            <Callout.Root color="amber" size="1" mb="3">
+              <Callout.Text>
+                {t.milestonesOutside(
+                  outside.map((m) => `“${m.name || m.year}”`).join(", "),
+                  preview.months.length
+                    ? monthName(preview.months[preview.months.length - 1].month, lang)
+                    : String(lastRunYear),
+                )}
+              </Callout.Text>
+            </Callout.Root>
+          ) : null}
+
           <Flex gap="2" wrap="wrap" align="center">
             {PRESETS.map((preset) => (
               <Button
@@ -867,6 +887,7 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
           <Tabs.List>
             <Tabs.Trigger value="summary">{t.tabSummary}</Tabs.Trigger>
             <Tabs.Trigger value="months">{t.tabMonths}</Tabs.Trigger>
+            <Tabs.Trigger value="method">{t.tabMethod}</Tabs.Trigger>
             <Tabs.Trigger value="sources">{t.tabSources}</Tabs.Trigger>
           </Tabs.List>
 
@@ -964,6 +985,10 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
                   </Table.Body>
                 </Table.Root>
               </Box>
+            </Tabs.Content>
+
+            <Tabs.Content value="method">
+              <Methodology lang={lang} />
             </Tabs.Content>
 
             <Tabs.Content value="sources">
