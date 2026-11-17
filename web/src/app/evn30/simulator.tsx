@@ -19,10 +19,17 @@ import {
   TextField,
 } from "@radix-ui/themes";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 
 import { money, percent, plain, signedMoney } from "@/lib/evn30/format";
 import { DEFAULT_INPUTS, simulate } from "@/lib/evn30/simulate";
+import {
+  parseInputs,
+  readServerRaw,
+  readStoredRaw,
+  saveInputs,
+  subscribeToStored,
+} from "@/lib/evn30/storage";
 import type { ChannelKey, Inputs, Snapshot } from "@/lib/evn30/types";
 
 import { Chart } from "./chart";
@@ -69,8 +76,22 @@ function Field({
 }
 
 export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
-  const [draft, setDraft] = useState<Inputs>(DEFAULT_INPUTS);
-  const [applied, setApplied] = useState<Inputs>(DEFAULT_INPUTS);
+  // What the browser remembers. The server has none, so the first paint uses the
+  // defaults and React swaps in the stored values itself — no effect, no mismatch.
+  const storedRaw = useSyncExternalStore(subscribeToStored, readStoredRaw, readServerRaw);
+  const stored = useMemo(() => parseInputs(storedRaw) ?? DEFAULT_INPUTS, [storedRaw]);
+
+  // null until the reader touches a control, so what they remember wins until
+  // they change their mind.
+  const [draftEdit, setDraftEdit] = useState<Inputs | null>(null);
+  const [appliedEdit, setAppliedEdit] = useState<Inputs | null>(null);
+  const draft = draftEdit ?? stored;
+  const applied = appliedEdit ?? stored;
+
+  const apply = () => {
+    setAppliedEdit(draft);
+    saveInputs(draft);
+  };
 
   const result = useMemo(() => simulate(snapshot, applied), [snapshot, applied]);
   // The line under the controls describes what the controls currently say, not
@@ -78,7 +99,7 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
   const preview = useMemo(() => simulate(snapshot, draft), [snapshot, draft]);
   const dirty = JSON.stringify(draft) !== JSON.stringify(applied);
   const set = <K extends keyof Inputs>(key: K, value: Inputs[K]) =>
-    setDraft((d) => ({ ...d, [key]: value }));
+    setDraftEdit({ ...draft, [key]: value });
 
   const percentMode = draft.mode === "percent";
   const winner = result.channels[0];
@@ -240,7 +261,7 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
                 </>
               )}
             </Text>
-            <Button size="2" disabled={!dirty} onClick={() => setApplied(draft)}>
+            <Button size="2" disabled={!dirty} onClick={apply}>
               {dirty ? "Apply" : "Applied"}
             </Button>
           </Flex>

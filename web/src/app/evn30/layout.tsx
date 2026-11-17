@@ -1,5 +1,7 @@
 import { Theme } from "@radix-ui/themes";
 import "@radix-ui/themes/styles.css";
+
+import { AppearanceSync } from "./appearance";
 import "./evn30.css";
 
 /**
@@ -18,6 +20,7 @@ export default function Evn30Layout({ children }: { children: React.ReactNode })
   return (
     <>
       <script dangerouslySetInnerHTML={{ __html: APPEARANCE_SCRIPT }} />
+      <AppearanceSync />
       <Theme accentColor="indigo" grayColor="slate" radius="medium" appearance="inherit">
         {children}
       </Theme>
