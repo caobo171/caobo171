@@ -198,18 +198,18 @@ const EN: Copy = {
       trust: "Official. The current year is carried forward at 3.3% until it is published.",
     },
     {
-      what: "12-month deposit rate",
-      where: "Hand-built table",
+      what: "VND savings deposit, 12-month term",
+      where: "Hand-built table of representative bank rates",
       span: "2016 → today",
       trust:
-        "The weakest number on this page. No free historical series of Vietnamese deposit rates is published, so these are representative market rates, not an index. They are listed in full below so you can judge them.",
+        "The weakest number on this page. No free historical series of Vietnamese deposit rates is published, so these are representative rates across the large banks, not an official index. They are listed in full below so you can judge them.",
     },
   ],
-  depositHeading: "The deposit rates this page uses",
+  depositHeading: "Savings rates this page uses",
   depositIntro:
-    "Since this is the number you should trust least, here it is in full rather than hidden behind a summary.",
+    "The annual interest on a personal VND savings deposit taken on a 12-month term at a large Vietnamese bank — what a saver who rolled the deposit over every year could plausibly have got. Not an official index. Since this is the number you should trust least, here it is in full rather than hidden behind a summary.",
   thYear: "Year",
-  thRate: "12-month rate",
+  thRate: "Annual rate, 12-month VND deposit",
   chargesHeading: "What the model charges you",
   charges: [
     "The ETF trades in lots of 100 units. A month that cannot afford a lot buys nothing and the cash waits. Brokerage of 0.15% is charged on every purchase. Selling costs are not charged, because nothing is sold.",
@@ -329,18 +329,18 @@ const VI: Copy = {
       trust: "Số liệu chính thức. Năm hiện tại tạm suy ra theo mức 3,3% cho tới khi được công bố.",
     },
     {
-      what: "Lãi suất tiết kiệm 12 tháng",
-      where: "Bảng tự lập",
+      what: "Tiền gửi tiết kiệm VND, kỳ hạn 12 tháng",
+      where: "Bảng tự lập từ lãi suất tham khảo của các ngân hàng",
       span: "2016 → nay",
       trust:
-        "Đây là con số yếu nhất trên trang. Không có nguồn miễn phí nào công bố chuỗi lãi suất tiết kiệm Việt Nam theo lịch sử, nên đây là mức tham khảo của thị trường chứ không phải một chỉ số. Toàn bộ bảng được liệt kê bên dưới để bạn tự đánh giá.",
+        "Đây là con số yếu nhất trên trang. Không có nguồn miễn phí nào công bố chuỗi lãi suất tiết kiệm Việt Nam theo lịch sử, nên đây là mức tham khảo chung của nhóm ngân hàng lớn chứ không phải một chỉ số chính thức. Toàn bộ bảng được liệt kê bên dưới để bạn tự đánh giá.",
     },
   ],
-  depositHeading: "Bảng lãi suất trang này dùng",
+  depositHeading: "Lãi suất tiết kiệm trang này dùng",
   depositIntro:
-    "Vì đây là con số bạn nên tin ít nhất, nó được in ra đầy đủ thay vì giấu sau một câu tóm tắt.",
+    "Lãi suất một năm của sổ tiết kiệm VND cá nhân, kỳ hạn 12 tháng, tại các ngân hàng lớn — mức mà một người gửi rồi tái tục đều đặn mỗi năm có thể nhận được. Không phải chỉ số chính thức. Vì đây là con số bạn nên tin ít nhất, nó được in ra đầy đủ thay vì giấu sau một câu tóm tắt.",
   thYear: "Năm",
-  thRate: "Lãi suất 12 tháng",
+  thRate: "Lãi suất năm, gửi VND kỳ hạn 12 tháng",
   chargesHeading: "Mô hình tính những chi phí nào",
   charges: [
     "ETF giao dịch theo lô 100 chứng chỉ. Tháng nào chưa đủ tiền mua trọn một lô thì không mua gì, tiền chờ sang tháng sau. Mỗi lần mua chịu phí môi giới 0,15%. Không tính phí bán, vì mô hình không bán ra.",
