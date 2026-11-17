@@ -42,7 +42,8 @@ export interface Copy {
   applied: string;
 
   paidIn: string;
-  inTodaysMoney: string;
+  inTodaysMoney: (amount: string) => string;
+  paidInHelp: string;
   windowLabel: string;
   inflationLabel: string;
   inflationHelp: (annual: string) => string;
@@ -144,7 +145,9 @@ const EN: Copy = {
   applied: "Applied",
 
   paidIn: "Capital paid in",
-  inTodaysMoney: "In today's money",
+  inTodaysMoney: (a) => `≈ ${a} in today's money`,
+  paidInHelp:
+    "One sum, stated two ways: what you actually hand over, and what that adds up to in today's purchasing power. The second is the smaller one whenever much of the plan lies in the future, because đồng paid in 2034 buy less than đồng paid now — it is not a loss. What the money turned into is in the three cards below.",
   windowLabel: "Window",
   inflationLabel: "Inflation over it",
   inflationHelp: (annual) =>
@@ -286,7 +289,9 @@ const VI: Copy = {
   applied: "Đã áp dụng",
 
   paidIn: "Vốn đã bỏ ra",
-  inTodaysMoney: "Quy ra tiền hôm nay",
+  inTodaysMoney: (a) => `≈ ${a} theo giá hôm nay`,
+  paidInHelp:
+    "Vẫn là một khoản tiền, chỉ nói theo hai cách: số bạn thực sự bỏ ra, và số đó quy về sức mua của hôm nay. Vế sau nhỏ hơn khi phần lớn kế hoạch nằm ở tương lai, vì đồng tiền bỏ ra năm 2034 mua được ít hơn đồng tiền bây giờ — đây không phải khoản lỗ. Số tiền đó thành bao nhiêu thì xem ba ô bên dưới.",
   windowLabel: "Khoảng thời gian",
   inflationLabel: "Lạm phát trong kỳ",
   inflationHelp: (annual) =>

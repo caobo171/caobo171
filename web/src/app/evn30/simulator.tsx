@@ -178,7 +178,17 @@ function A11ySlider({
   );
 }
 
-function Stat({ label, value, help }: { label: string; value: string; help?: string }) {
+function Stat({
+  label,
+  value,
+  help,
+  note,
+}: {
+  label: string;
+  value: string;
+  help?: string;
+  note?: string;
+}) {
   return (
     <Box>
       <Flex align="center" gap="1">
@@ -190,6 +200,11 @@ function Stat({ label, value, help }: { label: string; value: string; help?: str
       <Text as="div" size="4" weight="bold" style={{ letterSpacing: "-0.01em" }}>
         {value}
       </Text>
+      {note ? (
+        <Text as="div" size="1" color="gray">
+          {note}
+        </Text>
+      ) : null}
     </Box>
   );
 }
@@ -478,8 +493,14 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
 
         <Card size="2" my="4">
           <Flex gap="6" wrap="wrap">
-            <Stat label={t.paidIn} value={money(result.paidIn, lang)} />
-            <Stat label={t.inTodaysMoney} value={money(result.paidInToday, lang)} />
+            <Stat
+              label={t.paidIn}
+              value={money(result.paidIn, lang)}
+              // Shown as one figure with its restatement underneath. Side by
+              // side as peers, the smaller one reads as a loss.
+              note={t.inTodaysMoney(money(result.paidInToday, lang))}
+              help={t.paidInHelp}
+            />
             <Stat
               label={t.windowLabel}
               value={`${t.windowLength(result.months.length)} · ${
