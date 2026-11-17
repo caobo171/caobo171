@@ -562,10 +562,17 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
                 {money(c.value, lang)}
               </Text>
               <Tooltip content={t.beforeInflationHelp}>
-                <Text as="div" size="2" color="gray" mb="2" style={{ cursor: "help" }}>
+                <Text as="div" size="2" color="gray" style={{ cursor: "help" }}>
                   {signedMoney(c.profit, lang)} {t.onWhatYouPaidIn}
                 </Text>
               </Tooltip>
+              {/* The nominal figure on its own invites "and after inflation?" */}
+              <Flex align="center" gap="1" mb="2">
+                <Text as="div" size="2" color="gray">
+                  {signedMoney(c.realProfit, lang)} {t.afterInflationShort}
+                </Text>
+                <InfoDot text={t.afterInflationHelp} />
+              </Flex>
               <Badge color={ACCENT[c.key]} variant="soft">
                 {percent(c.xirr, 2, lang)} {t.aYear}
               </Badge>

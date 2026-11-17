@@ -53,6 +53,7 @@ export interface Copy {
   etf: string;
   bank: string;
   onWhatYouPaidIn: string;
+  afterInflationShort: string;
   aYear: string;
   winner: string;
 
@@ -157,7 +158,8 @@ const EN: Copy = {
   gold: "SJC gold",
   etf: "VN30 ETF",
   bank: "Bank savings",
-  onWhatYouPaidIn: "on what you paid in, before inflation",
+  onWhatYouPaidIn: "on what you paid in",
+  afterInflationShort: "after inflation, in today's money",
   aYear: "a year",
   winner: "Best",
 
@@ -301,7 +303,8 @@ const VI: Copy = {
   gold: "Vàng SJC",
   etf: "Quỹ ETF VN30",
   bank: "Gửi tiết kiệm",
-  onWhatYouPaidIn: "so với vốn bỏ ra, chưa trừ lạm phát",
+  onWhatYouPaidIn: "so với vốn bỏ ra",
+  afterInflationShort: "sau lạm phát, theo giá hôm nay",
   aYear: "mỗi năm",
   winner: "Cao nhất",
 
