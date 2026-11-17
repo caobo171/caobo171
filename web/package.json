@@ -10,9 +10,12 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "test": "vitest run",
+    "evn30:refresh": "node scripts/refresh-evn30.mjs"
   },
   "dependencies": {
+    "@radix-ui/themes": "^3.3.0",
     "drizzle-orm": "^0.45.2",
     "next": "16.3.4",
     "postgres": "^3.4.9",
@@ -27,6 +30,7 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.7"
   }
 }

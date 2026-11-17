@@ -1,0 +1,965 @@
+{
+  "generatedAt": "2026-11-17T07:46:25.636Z",
+  "latest": {
+    "date": "2026-11-16",
+    "etfDate": "2026-11-16",
+    "etf": 33.27,
+    "goldDate": "2026-11-16",
+    "goldBuy": 134500,
+    "goldSell": 137500
+  },
+  "months": [
+    {
+      "month": "2016-01",
+      "date": "2016-01-04",
+      "etf": 9.4,
+      "goldBuy": 32450,
+      "goldSell": 32900
+    },
+    {
+      "month": "2016-02",
+      "date": "2016-02-01",
+      "etf": 9,
+      "goldBuy": 32690,
+      "goldSell": 32950
+    },
+    {
+      "month": "2016-03",
+      "date": "2016-03-01",
+      "etf": 9.2,
+      "goldBuy": 33350,
+      "goldSell": 33630
+    },
+    {
+      "month": "2016-04",
+      "date": "2016-04-01",
+      "etf": 9.1,
+      "goldBuy": 33070,
+      "goldSell": 33320
+    },
+    {
+      "month": "2016-05",
+      "date": "2016-05-04",
+      "etf": 9.5,
+      "goldBuy": 33950,
+      "goldSell": 34300
+    },
+    {
+      "month": "2016-06",
+      "date": "2016-06-01",
+      "etf": 9.8,
+      "goldBuy": 33210,
+      "goldSell": 33450
+    },
+    {
+      "month": "2016-07",
+      "date": "2016-07-01",
+      "etf": 10.1,
+      "goldBuy": 35340,
+      "goldSell": 35590
+    },
+    {
+      "month": "2016-08",
+      "date": "2016-08-01",
+      "etf": 10.2,
+      "goldBuy": 36490,
+      "goldSell": 36740
+    },
+    {
+      "month": "2016-09",
+      "date": "2016-09-01",
+      "etf": 10.6,
+      "goldBuy": 35980,
+      "goldSell": 36200
+    },
+    {
+      "month": "2016-10",
+      "date": "2016-10-03",
+      "etf": 10.8,
+      "goldBuy": 35960,
+      "goldSell": 36160
+    },
+    {
+      "month": "2016-11",
+      "date": "2016-11-01",
+      "etf": 10.4,
+      "goldBuy": 35750,
+      "goldSell": 35950
+    },
+    {
+      "month": "2016-12",
+      "date": "2016-12-01",
+      "etf": 10.26,
+      "goldBuy": 35650,
+      "goldSell": 35840
+    },
+    {
+      "month": "2017-01",
+      "date": "2017-01-03",
+      "etf": 10.19,
+      "goldBuy": 36000,
+      "goldSell": 36500
+    },
+    {
+      "month": "2017-02",
+      "date": "2017-02-02",
+      "etf": 10.52,
+      "goldBuy": 36600,
+      "goldSell": 37100
+    },
+    {
+      "month": "2017-03",
+      "date": "2017-03-01",
+      "etf": 10.7,
+      "goldBuy": 36670,
+      "goldSell": 36930
+    },
+    {
+      "month": "2017-04",
+      "date": "2017-04-03",
+      "etf": 11.34,
+      "goldBuy": 36370,
+      "goldSell": 36550
+    },
+    {
+      "month": "2017-05",
+      "date": "2017-05-03",
+      "etf": 11.18,
+      "goldBuy": 36680,
+      "goldSell": 36890
+    },
+    {
+      "month": "2017-06",
+      "date": "2017-06-01",
+      "etf": 11.79,
+      "goldBuy": 36230,
+      "goldSell": 36430
+    },
+    {
+      "month": "2017-07",
+      "date": "2017-07-03",
+      "etf": 12.63,
+      "goldBuy": 36190,
+      "goldSell": 36380
+    },
+    {
+      "month": "2017-08",
+      "date": "2017-08-01",
+      "etf": 12.44,
+      "goldBuy": 36140,
+      "goldSell": 36330
+    },
+    {
+      "month": "2017-09",
+      "date": "2017-09-01",
+      "etf": 12.69,
+      "goldBuy": 36460,
+      "goldSell": 36650
+    },
+    {
+      "month": "2017-10",
+      "date": "2017-10-02",
+      "etf": 12.96,
+      "goldBuy": 36410,
+      "goldSell": 36600
+    },
+    {
+      "month": "2017-11",
+      "date": "2017-11-01",
+      "etf": 13.75,
+      "goldBuy": 36450,
+      "goldSell": 36630
+    },
+    {
+      "month": "2017-12",
+      "date": "2017-12-01",
+      "etf": 15.73,
+      "goldBuy": 36310,
+      "goldSell": 36490
+    },
+    {
+      "month": "2018-01",
+      "date": "2018-01-02",
+      "etf": 16.41,
+      "goldBuy": 36460,
+      "goldSell": 36640
+    },
+    {
+      "month": "2018-02",
+      "date": "2018-02-01",
+      "etf": 17.8,
+      "goldBuy": 36710,
+      "goldSell": 36890
+    },
+    {
+      "month": "2018-03",
+      "date": "2018-03-01",
+      "etf": 18.15,
+      "goldBuy": 36510,
+      "goldSell": 36690
+    },
+    {
+      "month": "2018-04",
+      "date": "2018-04-02",
+      "etf": 19.1,
+      "goldBuy": 36650,
+      "goldSell": 36830
+    },
+    {
+      "month": "2018-05",
+      "date": "2018-05-02",
+      "etf": 16.4,
+      "goldBuy": 36700,
+      "goldSell": 36900
+    },
+    {
+      "month": "2018-06",
+      "date": "2018-06-01",
+      "etf": 16.04,
+      "goldBuy": 36540,
+      "goldSell": 36720
+    },
+    {
+      "month": "2018-07",
+      "date": "2018-07-02",
+      "etf": 15.33,
+      "goldBuy": 36630,
+      "goldSell": 36810
+    },
+    {
+      "month": "2018-08",
+      "date": "2018-08-01",
+      "etf": 15.55,
+      "goldBuy": 36650,
+      "goldSell": 36830
+    },
+    {
+      "month": "2018-09",
+      "date": "2018-09-04",
+      "etf": 15.8,
+      "goldBuy": 36600,
+      "goldSell": 36780
+    },
+    {
+      "month": "2018-10",
+      "date": "2018-10-01",
+      "etf": 16.45,
+      "goldBuy": 36340,
+      "goldSell": 36500
+    },
+    {
+      "month": "2018-11",
+      "date": "2018-11-01",
+      "etf": 14.57,
+      "goldBuy": 36410,
+      "goldSell": 36560
+    },
+    {
+      "month": "2018-12",
+      "date": "2018-12-03",
+      "etf": 15.18,
+      "goldBuy": 36370,
+      "goldSell": 36520
+    },
+    {
+      "month": "2019-01",
+      "date": "2019-01-02",
+      "etf": 14.1,
+      "goldBuy": 36360,
+      "goldSell": 36600
+    },
+    {
+      "month": "2019-02",
+      "date": "2019-02-01",
+      "etf": 14.2,
+      "goldBuy": 36950,
+      "goldSell": 37150
+    },
+    {
+      "month": "2019-03",
+      "date": "2019-03-01",
+      "etf": 15.2,
+      "goldBuy": 36680,
+      "goldSell": 36880
+    },
+    {
+      "month": "2019-04",
+      "date": "2019-04-01",
+      "etf": 14.94,
+      "goldBuy": 36370,
+      "goldSell": 36540
+    },
+    {
+      "month": "2019-05",
+      "date": "2019-05-02",
+      "etf": 14.72,
+      "goldBuy": 36320,
+      "goldSell": 36500
+    },
+    {
+      "month": "2019-06",
+      "date": "2019-06-03",
+      "etf": 14.1,
+      "goldBuy": 36490,
+      "goldSell": 36670
+    },
+    {
+      "month": "2019-07",
+      "date": "2019-07-01",
+      "etf": 14.55,
+      "goldBuy": 38100,
+      "goldSell": 38400
+    },
+    {
+      "month": "2019-08",
+      "date": "2019-08-01",
+      "etf": 14.68,
+      "goldBuy": 39200,
+      "goldSell": 39500
+    },
+    {
+      "month": "2019-09",
+      "date": "2019-09-03",
+      "etf": 14.78,
+      "goldBuy": 42350,
+      "goldSell": 42700
+    },
+    {
+      "month": "2019-10",
+      "date": "2019-10-01",
+      "etf": 15.5,
+      "goldBuy": 41000,
+      "goldSell": 41300
+    },
+    {
+      "month": "2019-11",
+      "date": "2019-11-01",
+      "etf": 15.5,
+      "goldBuy": 41850,
+      "goldSell": 42150
+    },
+    {
+      "month": "2019-12",
+      "date": "2019-12-02",
+      "etf": 14.65,
+      "goldBuy": 41250,
+      "goldSell": 41450
+    },
+    {
+      "month": "2020-01",
+      "date": "2020-01-02",
+      "etf": 14.78,
+      "goldBuy": 42300,
+      "goldSell": 42800
+    },
+    {
+      "month": "2020-02",
+      "date": "2020-02-03",
+      "etf": 13.97,
+      "goldBuy": 44200,
+      "goldSell": 44850
+    },
+    {
+      "month": "2020-03",
+      "date": "2020-03-02",
+      "etf": 13.99,
+      "goldBuy": 44700,
+      "goldSell": 45800
+    },
+    {
+      "month": "2020-04",
+      "date": "2020-04-01",
+      "etf": 10.38,
+      "goldBuy": 47000,
+      "goldSell": 48300
+    },
+    {
+      "month": "2020-05",
+      "date": "2020-05-04",
+      "etf": 11.9,
+      "goldBuy": 47800,
+      "goldSell": 48600
+    },
+    {
+      "month": "2020-06",
+      "date": "2020-06-01",
+      "etf": 13.69,
+      "goldBuy": 48700,
+      "goldSell": 49030
+    },
+    {
+      "month": "2020-07",
+      "date": "2020-07-01",
+      "etf": 13.3,
+      "goldBuy": 49400,
+      "goldSell": 49800
+    },
+    {
+      "month": "2020-08",
+      "date": "2020-08-03",
+      "etf": 12.62,
+      "goldBuy": 56500,
+      "goldSell": 57700
+    },
+    {
+      "month": "2020-09",
+      "date": "2020-09-01",
+      "etf": 13.98,
+      "goldBuy": 56850,
+      "goldSell": 57550
+    },
+    {
+      "month": "2020-10",
+      "date": "2020-10-01",
+      "etf": 14.55,
+      "goldBuy": 55600,
+      "goldSell": 56000
+    },
+    {
+      "month": "2020-11",
+      "date": "2020-11-02",
+      "etf": 14.96,
+      "goldBuy": 55950,
+      "goldSell": 56350
+    },
+    {
+      "month": "2020-12",
+      "date": "2020-12-01",
+      "etf": 16.32,
+      "goldBuy": 53750,
+      "goldSell": 54500
+    },
+    {
+      "month": "2021-01",
+      "date": "2021-01-04",
+      "etf": 18.33,
+      "goldBuy": 55500,
+      "goldSell": 56100
+    },
+    {
+      "month": "2021-02",
+      "date": "2021-02-01",
+      "etf": 17.31,
+      "goldBuy": 56550,
+      "goldSell": 57050
+    },
+    {
+      "month": "2021-03",
+      "date": "2021-03-01",
+      "etf": 20.03,
+      "goldBuy": 55700,
+      "goldSell": 56200
+    },
+    {
+      "month": "2021-04",
+      "date": "2021-04-01",
+      "etf": 20.6,
+      "goldBuy": 54500,
+      "goldSell": 54900
+    },
+    {
+      "month": "2021-05",
+      "date": "2021-05-04",
+      "etf": 22.2,
+      "goldBuy": 55200,
+      "goldSell": 55600
+    },
+    {
+      "month": "2021-06",
+      "date": "2021-06-01",
+      "etf": 24.97,
+      "goldBuy": 56950,
+      "goldSell": 57650
+    },
+    {
+      "month": "2021-07",
+      "date": "2021-07-01",
+      "etf": 25.89,
+      "goldBuy": 56300,
+      "goldSell": 56900
+    },
+    {
+      "month": "2021-08",
+      "date": "2021-08-02",
+      "etf": 24.7,
+      "goldBuy": 56550,
+      "goldSell": 57250
+    },
+    {
+      "month": "2021-09",
+      "date": "2021-09-01",
+      "etf": 24.05,
+      "goldBuy": 56500,
+      "goldSell": 57500
+    },
+    {
+      "month": "2021-10",
+      "date": "2021-10-01",
+      "etf": 24.57,
+      "goldBuy": 56500,
+      "goldSell": 57300
+    },
+    {
+      "month": "2021-11",
+      "date": "2021-11-01",
+      "etf": 25.69,
+      "goldBuy": 57600,
+      "goldSell": 58250
+    },
+    {
+      "month": "2021-12",
+      "date": "2021-12-01",
+      "etf": 26.2,
+      "goldBuy": 59800,
+      "goldSell": 60550
+    },
+    {
+      "month": "2022-01",
+      "date": "2022-01-04",
+      "etf": 26.2,
+      "goldBuy": 60900,
+      "goldSell": 61600
+    },
+    {
+      "month": "2022-02",
+      "date": "2022-02-07",
+      "etf": 25.91,
+      "goldBuy": 61800,
+      "goldSell": 62500
+    },
+    {
+      "month": "2022-03",
+      "date": "2022-03-01",
+      "etf": 25.6,
+      "goldBuy": 65600,
+      "goldSell": 66400
+    },
+    {
+      "month": "2022-04",
+      "date": "2022-04-01",
+      "etf": 25.88,
+      "goldBuy": 68400,
+      "goldSell": 69100
+    },
+    {
+      "month": "2022-05",
+      "date": "2022-05-04",
+      "etf": 23.5,
+      "goldBuy": 69500,
+      "goldSell": 70300
+    },
+    {
+      "month": "2022-06",
+      "date": "2022-06-01",
+      "etf": 22.65,
+      "goldBuy": 68300,
+      "goldSell": 69300
+    },
+    {
+      "month": "2022-07",
+      "date": "2022-07-01",
+      "etf": 21.3,
+      "goldBuy": 68100,
+      "goldSell": 68700
+    },
+    {
+      "month": "2022-08",
+      "date": "2022-08-01",
+      "etf": 21.1,
+      "goldBuy": 67000,
+      "goldSell": 68000
+    },
+    {
+      "month": "2022-09",
+      "date": "2022-09-05",
+      "etf": 22.06,
+      "goldBuy": 65700,
+      "goldSell": 66500
+    },
+    {
+      "month": "2022-10",
+      "date": "2022-10-03",
+      "etf": 18.8,
+      "goldBuy": 65100,
+      "goldSell": 66100
+    },
+    {
+      "month": "2022-11",
+      "date": "2022-11-01",
+      "etf": 17.52,
+      "goldBuy": 66100,
+      "goldSell": 67000
+    },
+    {
+      "month": "2022-12",
+      "date": "2022-12-01",
+      "etf": 18.1,
+      "goldBuy": 66800,
+      "goldSell": 67600
+    },
+    {
+      "month": "2023-01",
+      "date": "2023-01-03",
+      "etf": 17.7,
+      "goldBuy": 65900,
+      "goldSell": 66700
+    },
+    {
+      "month": "2023-02",
+      "date": "2023-02-01",
+      "etf": 18.52,
+      "goldBuy": 66300,
+      "goldSell": 67300
+    },
+    {
+      "month": "2023-03",
+      "date": "2023-03-01",
+      "etf": 17.54,
+      "goldBuy": 66200,
+      "goldSell": 66850
+    },
+    {
+      "month": "2023-04",
+      "date": "2023-04-03",
+      "etf": 18.59,
+      "goldBuy": 66450,
+      "goldSell": 67050
+    },
+    {
+      "month": "2023-05",
+      "date": "2023-05-04",
+      "etf": 17.7,
+      "goldBuy": 66600,
+      "goldSell": 67200
+    },
+    {
+      "month": "2023-06",
+      "date": "2023-06-01",
+      "etf": 18.2,
+      "goldBuy": 66500,
+      "goldSell": 67050
+    },
+    {
+      "month": "2023-07",
+      "date": "2023-07-03",
+      "etf": 19.2,
+      "goldBuy": 66500,
+      "goldSell": 67000
+    },
+    {
+      "month": "2023-08",
+      "date": "2023-08-01",
+      "etf": 21.02,
+      "goldBuy": 66600,
+      "goldSell": 67200
+    },
+    {
+      "month": "2023-09",
+      "date": "2023-09-05",
+      "etf": 21.38,
+      "goldBuy": 67600,
+      "goldSell": 68300
+    },
+    {
+      "month": "2023-10",
+      "date": "2023-10-02",
+      "etf": 20.05,
+      "goldBuy": 68100,
+      "goldSell": 68800
+    },
+    {
+      "month": "2023-11",
+      "date": "2023-11-01",
+      "etf": 18.3,
+      "goldBuy": 70150,
+      "goldSell": 70900
+    },
+    {
+      "month": "2023-12",
+      "date": "2023-12-01",
+      "etf": 18.78,
+      "goldBuy": 72400,
+      "goldSell": 73600
+    },
+    {
+      "month": "2024-01",
+      "date": "2024-01-02",
+      "etf": 19.53,
+      "goldBuy": 70000,
+      "goldSell": 73900
+    },
+    {
+      "month": "2024-02",
+      "date": "2024-02-01",
+      "etf": 20.29,
+      "goldBuy": 76200,
+      "goldSell": 78400
+    },
+    {
+      "month": "2024-03",
+      "date": "2024-03-01",
+      "etf": 21.87,
+      "goldBuy": 77900,
+      "goldSell": 79800
+    },
+    {
+      "month": "2024-04",
+      "date": "2024-04-01",
+      "etf": 22.38,
+      "goldBuy": 78300,
+      "goldSell": 80800
+    },
+    {
+      "month": "2024-05",
+      "date": "2024-05-02",
+      "etf": 21.55,
+      "goldBuy": 83000,
+      "goldSell": 85200
+    },
+    {
+      "month": "2024-06",
+      "date": "2024-06-03",
+      "etf": 22.63,
+      "goldBuy": 80950,
+      "goldSell": 83000
+    },
+    {
+      "month": "2024-07",
+      "date": "2024-07-01",
+      "etf": 22.65,
+      "goldBuy": 74980,
+      "goldSell": 76980
+    },
+    {
+      "month": "2024-08",
+      "date": "2024-08-01",
+      "etf": 22.31,
+      "goldBuy": 77800,
+      "goldSell": 79800
+    },
+    {
+      "month": "2024-09",
+      "date": "2024-09-04",
+      "etf": 22.99,
+      "goldBuy": 79000,
+      "goldSell": 81000
+    },
+    {
+      "month": "2024-10",
+      "date": "2024-10-01",
+      "etf": 23.81,
+      "goldBuy": 82000,
+      "goldSell": 84000
+    },
+    {
+      "month": "2024-11",
+      "date": "2024-11-01",
+      "etf": 23.23,
+      "goldBuy": 87500,
+      "goldSell": 89500
+    },
+    {
+      "month": "2024-12",
+      "date": "2024-12-02",
+      "etf": 22.84,
+      "goldBuy": 83300,
+      "goldSell": 85800
+    },
+    {
+      "month": "2025-01",
+      "date": "2025-01-02",
+      "etf": 23.5,
+      "goldBuy": 82200,
+      "goldSell": 84200
+    },
+    {
+      "month": "2025-02",
+      "date": "2025-02-03",
+      "etf": 22.98,
+      "goldBuy": 86800,
+      "goldSell": 88800
+    },
+    {
+      "month": "2025-03",
+      "date": "2025-03-03",
+      "etf": 23.76,
+      "goldBuy": 88500,
+      "goldSell": 90500
+    },
+    {
+      "month": "2025-04",
+      "date": "2025-04-01",
+      "etf": 23.81,
+      "goldBuy": 99400,
+      "goldSell": 102100
+    },
+    {
+      "month": "2025-05",
+      "date": "2025-05-05",
+      "etf": 22.82,
+      "goldBuy": 119300,
+      "goldSell": 121300
+    },
+    {
+      "month": "2025-06",
+      "date": "2025-06-02",
+      "etf": 24.77,
+      "goldBuy": 115700,
+      "goldSell": 118200
+    },
+    {
+      "month": "2025-07",
+      "date": "2025-07-01",
+      "etf": 25.58,
+      "goldBuy": 118700,
+      "goldSell": 120700
+    },
+    {
+      "month": "2025-08",
+      "date": "2025-08-01",
+      "etf": 28.3,
+      "goldBuy": 119900,
+      "goldSell": 121400
+    },
+    {
+      "month": "2025-09",
+      "date": "2025-09-03",
+      "etf": 32.88,
+      "goldBuy": 129100,
+      "goldSell": 130600
+    },
+    {
+      "month": "2025-10",
+      "date": "2025-10-01",
+      "etf": 33,
+      "goldBuy": 136400,
+      "goldSell": 138400
+    },
+    {
+      "month": "2025-11",
+      "date": "2025-11-03",
+      "etf": 33.2,
+      "goldBuy": 146400,
+      "goldSell": 148400
+    },
+    {
+      "month": "2025-12",
+      "date": "2025-12-01",
+      "etf": 34.1,
+      "goldBuy": 153200,
+      "goldSell": 155200
+    },
+    {
+      "month": "2026-01",
+      "date": "2026-01-05",
+      "etf": 36,
+      "goldBuy": 150800,
+      "goldSell": 152800
+    },
+    {
+      "month": "2026-02",
+      "date": "2026-02-02",
+      "etf": 36.53,
+      "goldBuy": 169000,
+      "goldSell": 172000
+    },
+    {
+      "month": "2026-03",
+      "date": "2026-03-02",
+      "etf": 35.7,
+      "goldBuy": 184000,
+      "goldSell": 187000
+    },
+    {
+      "month": "2026-04",
+      "date": "2026-04-01",
+      "etf": 32.92,
+      "goldBuy": 173700,
+      "goldSell": 176700
+    },
+    {
+      "month": "2026-05",
+      "date": "2026-05-04",
+      "etf": 35.87,
+      "goldBuy": 163000,
+      "goldSell": 166000
+    },
+    {
+      "month": "2026-06",
+      "date": "2026-06-01",
+      "etf": 35.6,
+      "goldBuy": 155500,
+      "goldSell": 158500
+    },
+    {
+      "month": "2026-07",
+      "date": "2026-07-01",
+      "etf": 36.08,
+      "goldBuy": 143400,
+      "goldSell": 146400
+    },
+    {
+      "month": "2026-08",
+      "date": "2026-08-03",
+      "etf": 34.4,
+      "goldBuy": 137000,
+      "goldSell": 141000
+    },
+    {
+      "month": "2026-09",
+      "date": "2026-09-03",
+      "etf": 35.24,
+      "goldBuy": 145700,
+      "goldSell": 148700
+    },
+    {
+      "month": "2026-10",
+      "date": "2026-10-01",
+      "etf": 34.22,
+      "goldBuy": 141300,
+      "goldSell": 144300
+    },
+    {
+      "month": "2026-11",
+      "date": "2026-11-02",
+      "etf": 32.95,
+      "goldBuy": 136000,
+      "goldSell": 139000
+    }
+  ],
+  "cpi": {
+    "2013": 138.0067,
+    "2014": 143.6437,
+    "2015": 144.5504,
+    "2016": 148.4073,
+    "2017": 153.6317,
+    "2018": 159.0696,
+    "2019": 163.5169,
+    "2020": 168.7837,
+    "2021": 171.8804,
+    "2022": 177.3058,
+    "2023": 183.0734,
+    "2024": 189.7027,
+    "2025": 195.9818,
+    "2026": 202.4492
+  },
+  "deposit": {
+    "2016": 6.5,
+    "2017": 6.8,
+    "2018": 6.9,
+    "2019": 7,
+    "2020": 6,
+    "2021": 5.5,
+    "2022": 7.2,
+    "2023": 6.3,
+    "2024": 5,
+    "2025": 5.2,
+    "2026": 5
+  },
+  "sources": {
+    "etf": "DNSE Entrade chart API — E1VFVN30 daily close (services.entrade.com.vn)",
+    "gold": "github.com/andy-nguyen-21/gold-market-data-vietnam — SJC daily buy/sell, community-maintained",
+    "cpi": "World Bank FP.CPI.TOTL, Vietnam, annual index",
+    "deposit": "Hand-built table of representative 12-month VND deposit rates. No free historical series is published; treat as approximate."
+  }
+}
