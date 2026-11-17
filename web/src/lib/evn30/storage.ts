@@ -206,13 +206,35 @@ export function parseLang(raw: string | null): Lang {
  * The stored choice if there is one, otherwise a guess from the browser —
  * a Vietnamese reader should not have to ask for a Vietnamese page.
  */
+export const LANG_PARAM = "lang";
+
 export function readStoredLangRaw(): string | null {
   try {
+    // A shared link has to open in the language the sender was reading, so the
+    // URL outranks both what this browser remembers and what it prefers.
+    const fromUrl = new URLSearchParams(window.location.search).get(LANG_PARAM);
+    if (fromUrl === "vi" || fromUrl === "en") return fromUrl;
+
     const stored = window.localStorage.getItem(LANG_KEY);
     if (stored) return stored;
     return window.navigator.language?.toLowerCase().startsWith("vi") ? "vi" : "en";
   } catch {
     return null;
+  }
+}
+
+/**
+ * Put the choice in the address bar so copying it carries the language.
+ * Replaces rather than pushes: flipping a language switch is not a place
+ * anyone wants the back button to return to.
+ */
+export function setLangParam(lang: Lang): void {
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set(LANG_PARAM, lang);
+    window.history.replaceState(null, "", url);
+  } catch {
+    /* no history API, or an opaque origin — the page still works */
   }
 }
 

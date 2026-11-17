@@ -140,7 +140,7 @@ const VI: MethodSection[] = [
   },
   {
     id: "inflation",
-    heading: "Lạm phát và “giá hôm nay”",
+    heading: "Lạm phát và “sức mua hôm nay”",
     body: [
       "Mọi con số ghi là sau lạm phát đều quy về sức mua của hôm nay — ngày dữ liệu giá được cập nhật lần cuối — chứ không bao giờ quy về sức mua của năm kết thúc kỳ chạy. Với một kỳ chạy trong quá khứ thì hai cái đó là một. Với một kỳ chạy tới 2046 thì chúng cách nhau rất xa, và cách đọc thứ hai sẽ thổi phồng kết quả lên cả một phần ba.",
       "Chỉ số giá tiêu dùng lấy từ Tổng cục Thống kê, theo từng năm. Qua khỏi năm cuối cùng được công bố, trang tiếp tục cộng lạm phát 3,3% mỗi năm, xấp xỉ mức trung bình dài hạn của Việt Nam. Đó là một giả định, và trong mọi kỳ chạy dài thì nó chính là thứ quyết định nhiều nhất.",
@@ -163,7 +163,7 @@ const VI: MethodSection[] = [
       "Lợi suất năm tính theo dòng tiền (XIRR), giải bằng phương pháp chia đôi trên đúng các dòng tiền có ngày tháng, quy ước một năm 365,25 ngày. Nó không phải là tổng lãi chia cho tổng vốn: tiền bỏ vào năm ngoái chưa có mười năm để sinh lời, và một mức trung bình bỏ qua chuyện từng đồng đến vào lúc nào sẽ thổi phồng một kế hoạch dồn tiền về cuối.",
       "Lãi được đo trên số tiền thật sự vào được danh mục, không đo trên tổng tiền để dành. Tiền mà một dấu mốc lấy đi thì chưa từng được đầu tư, nên ghi nó thành lỗ là sai.",
       "Mức sụt sâu nhất là mức giảm mạnh nhất của danh mục so với đỉnh của chính nó, không phải của giá tài sản — tiền nạp đều đặn làm dịu con số này, nên cột của tiết kiệm luôn bằng 0. Tiền rút ra để trả cho dấu mốc được cộng lại trước khi đo, nếu không thì trả tiền mua nhà sẽ bị ghi thành cú sập mạnh nhất của cả kỳ. Phép hiệu chỉnh này là gần đúng: số tiền đã rút lẽ ra vẫn lên xuống theo thị trường, nên con số thu được nông hơn thực tế vài điểm phần trăm.",
-      "Thu nhập hằng tháng bằng 4% danh mục cuối kỳ chia cho mười hai, tính theo giá hôm nay. Bốn phần trăm là quy ước thường dùng khi ước lượng khoản tiết kiệm trụ được bao lâu, không phải cam kết, và nó bỏ qua thuế, bỏ qua những năm thị trường xấu, bỏ qua việc bạn thực sự tiêu bao nhiêu.",
+      "Thu nhập hằng tháng bằng 4% danh mục cuối kỳ chia cho mười hai, tính theo sức mua hôm nay. Bốn phần trăm là quy ước thường dùng khi ước lượng khoản tiết kiệm trụ được bao lâu, không phải cam kết, và nó bỏ qua thuế, bỏ qua những năm thị trường xấu, bỏ qua việc bạn thực sự tiêu bao nhiêu.",
     ],
   },
   {

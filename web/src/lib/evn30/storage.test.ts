@@ -2,10 +2,12 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { DEFAULT_INPUTS } from "./simulate";
 import {
+  LANG_KEY,
   loadInputs,
   parseInputs,
   parseLang,
   parseTheme,
+  readStoredLangRaw,
   saveInputs,
   STORAGE_KEY,
 } from "./storage";
@@ -21,6 +23,24 @@ function stubStorage(initial: Record<string, string> = {}) {
   };
   vi.stubGlobal("window", { localStorage: storage });
   return map;
+}
+
+/** A browser with a URL and a language, for the things that read both. */
+function stubBrowser({
+  search = "",
+  stored,
+  language = "en-US",
+}: { search?: string; stored?: string; language?: string } = {}) {
+  const map = new Map<string, string>();
+  if (stored !== undefined) map.set(LANG_KEY, stored);
+  vi.stubGlobal("window", {
+    localStorage: {
+      getItem: (k: string) => map.get(k) ?? null,
+      setItem: (k: string, v: string) => void map.set(k, v),
+    },
+    location: { search },
+    navigator: { language },
+  });
 }
 
 afterEach(() => vi.unstubAllGlobals());
@@ -215,5 +235,37 @@ describe("parseTheme", () => {
     expect(parseTheme("")).toBe("system");
     expect(parseTheme("DARK")).toBe("system");
     expect(parseTheme('{"theme":"dark"}')).toBe("system");
+  });
+});
+
+
+describe("readStoredLangRaw", () => {
+  test("a lang in the URL wins, so a shared link reads as the sender saw it", () => {
+    stubBrowser({ search: "?lang=vi", stored: "en", language: "en-US" });
+    expect(readStoredLangRaw()).toBe("vi");
+
+    stubBrowser({ search: "?lang=en", stored: "vi", language: "vi-VN" });
+    expect(readStoredLangRaw()).toBe("en");
+  });
+
+  test("the param survives other query string entries", () => {
+    stubBrowser({ search: "?utm_source=x&lang=vi&ref=y", stored: "en" });
+    expect(readStoredLangRaw()).toBe("vi");
+  });
+
+  test("a language the page does not have is ignored rather than obeyed", () => {
+    stubBrowser({ search: "?lang=fr", stored: "vi" });
+    expect(readStoredLangRaw()).toBe("vi");
+  });
+
+  test("with no param it still remembers, then still guesses", () => {
+    stubBrowser({ stored: "vi", language: "en-US" });
+    expect(readStoredLangRaw()).toBe("vi");
+
+    stubBrowser({ language: "vi-VN" });
+    expect(readStoredLangRaw()).toBe("vi");
+
+    stubBrowser({ language: "en-GB" });
+    expect(readStoredLangRaw()).toBe("en");
   });
 });

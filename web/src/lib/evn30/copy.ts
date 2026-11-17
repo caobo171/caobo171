@@ -56,7 +56,6 @@ export interface Copy {
   etf: string;
   bank: string;
   onWhatYouPaidIn: string;
-  afterInflationShort: string;
   realLine: (value: string, profit: string) => string;
   incomeLine: (amount: string, rate: string) => string;
   incomeHelp: string;
@@ -201,7 +200,6 @@ const EN: Copy = {
   etf: "VN30 ETF",
   bank: "Bank savings",
   onWhatYouPaidIn: "on what you paid in",
-  afterInflationShort: "after inflation, in today's money",
   realLine: (value, profit) => `${value} in today's money (${profit})`,
   incomeLine: (amount, rate) => `${amount} a month if you drew ${rate} a year`,
   incomeHelp:
@@ -377,7 +375,7 @@ const VI: Copy = {
   applied: "Đã áp dụng",
 
   paidIn: "Vốn đã bỏ ra",
-  inTodaysMoney: (a) => `≈ ${a} theo giá hôm nay`,
+  inTodaysMoney: (a) => `≈ ${a} theo sức mua hôm nay`,
   paidInHelp:
     "Vẫn là một khoản tiền, chỉ nói theo hai cách: số bạn thực sự bỏ ra, và số đó quy về sức mua của hôm nay. Vế nào lớn hơn là tuỳ bạn bỏ tiền ra vào lúc nào. Tiền của quá khứ quy về hôm nay thì to ra — 4,7 triệu ₫ năm 2016 mua được bằng hơn 6 triệu ₫ bây giờ; tiền của tương lai thì nhỏ đi, vì đồng tiền năm 2034 mua được ít hơn. Cả hai chiều đều không phải lãi cũng không phải lỗ. Số tiền đó thành bao nhiêu thì xem ba ô bên dưới.",
   windowLabel: "Khoảng thời gian",
@@ -390,11 +388,10 @@ const VI: Copy = {
   etf: "Quỹ ETF VN30",
   bank: "Gửi tiết kiệm",
   onWhatYouPaidIn: "so với vốn bỏ ra",
-  afterInflationShort: "sau lạm phát, theo giá hôm nay",
-  realLine: (value, profit) => `${value} theo giá hôm nay (${profit})`,
+  realLine: (value, profit) => `${value} theo sức mua hôm nay (${profit})`,
   incomeLine: (amount, rate) => `${amount}/tháng nếu mỗi năm rút ${rate}`,
   incomeHelp:
-    "Đây là quy ước tham khảo, không phải cam kết. Rút 4% danh mục mỗi năm là giả định thường dùng khi ước lượng khoản tiết kiệm trụ được bao lâu, và con số ở đây đã quy về giá hôm nay. Nó chưa tính thuế, chưa tính bạn thực sự tiêu bao nhiêu, cũng chưa tính những năm danh mục sụt giảm. Trang này là bản ghi giá, không phải lời khuyên đầu tư.",
+    "Đây là quy ước tham khảo, không phải cam kết. Rút 4% danh mục mỗi năm là giả định thường dùng khi ước lượng khoản tiết kiệm trụ được bao lâu, và con số ở đây đã quy về sức mua hôm nay. Nó chưa tính thuế, chưa tính bạn thực sự tiêu bao nhiêu, cũng chưa tính những năm danh mục sụt giảm. Trang này là bản ghi giá, không phải lời khuyên đầu tư.",
   monthlySpend: "Mỗi tháng cần tiêu",
   monthlySpendHelp:
     "Tính theo tháng và theo sức mua hôm nay — mức bạn muốn tiêu, không nhất thiết là mức đang tiêu. Mỗi kênh sẽ được đối chiếu với con số này theo mức rút 4% mỗi năm. Để 0 nếu không muốn hiện phần kết luận.",
@@ -429,7 +426,7 @@ const VI: Copy = {
   presetChild: "Con",
   milestoneTotalLabel: "Các mốc ngốn",
   milestoneTotalHelp:
-    "Tổng số tiền các mốc lấy đi trong cả kỳ, tính theo giá từng năm, kèm dòng quy về giá hôm nay ở dưới.",
+    "Tổng số tiền các mốc lấy đi trong cả kỳ, tính theo giá từng năm, kèm dòng quy về sức mua hôm nay ở dưới.",
   spentOnMilestones: "đã chi cho các mốc",
   broke: "Cạn tiền",
   brokeLine: (month, amount) => `hết sạch từ ${month} — còn thiếu ${amount}`,
@@ -449,11 +446,11 @@ const VI: Copy = {
   thBoughtIn: "Số tháng mua được",
   thIdleCash: "Tiền mặt còn dư",
   thDeepestFall: "Mức sụt sâu nhất của danh mục",
-  thAfterInflation: "Lãi sau lạm phát, quy về tiền hôm nay",
+  thAfterInflation: "Lãi sau lạm phát, quy về sức mua hôm nay",
   afterInflationHelp:
-    "Vẫn là khoản lãi đó, nhưng quy về sức mua của đồng tiền hôm nay. Nếu bạn chạy đến tương lai, con số đã được chiết khấu ngược về hiện tại — +227 triệu nghĩa là 227 triệu theo giá trị hôm nay, chứ không phải 227 triệu của năm 2035, vốn mua được ít hơn nhiều.",
+    "Vẫn là khoản lãi đó, nhưng quy về sức mua của đồng tiền hôm nay. Nếu bạn chạy đến tương lai, con số đã được chiết khấu ngược về hiện tại — +227 triệu nghĩa là 227 triệu theo sức mua hôm nay, chứ không phải 227 triệu của năm 2035, vốn mua được ít hơn nhiều.",
   beforeInflationHelp:
-    "Số tiền danh nghĩa tại thời điểm kết thúc, chưa điều chỉnh việc giá cả đã tăng. Cột bên phải quy nó về tiền hôm nay.",
+    "Số tiền danh nghĩa tại thời điểm kết thúc, chưa điều chỉnh việc giá cả đã tăng. Cột bên phải quy nó về sức mua hôm nay.",
   ofMonths: (b, t) => `${b} / ${t} tháng`,
   fundUnits: (n) => `${n} chứng chỉ quỹ`,
   bankHolding: "lãi nhập gốc hằng tháng",

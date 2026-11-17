@@ -38,6 +38,7 @@ import {
   saveInputs,
   MAX_MILESTONES,
   saveLang,
+  setLangParam,
   subscribeToStored,
 } from "@/lib/evn30/storage";
 import type { ChannelKey, Inputs, Milestone, Snapshot } from "@/lib/evn30/types";
@@ -464,6 +465,9 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
                 onValueChange={(v) => {
                   setLangEdit(v as Lang);
                   saveLang(v as Lang);
+                  // Also into the URL, so the link someone copies opens the
+                  // way they were reading it.
+                  setLangParam(v as Lang);
                 }}
               >
                 {LANGS.map((l) => (
