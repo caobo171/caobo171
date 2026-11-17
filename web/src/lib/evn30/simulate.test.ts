@@ -126,6 +126,26 @@ describe("simulate", () => {
     for (const c of r.channels) expect(c.realValue).toBeCloseTo(c.value, 0);
   });
 
+  test("the assumed growth rate does not depend on the window being viewed", () => {
+    // A reader looking at the last two years must not get that bull run
+    // extrapolated for a decade; the fit is taken from the whole record.
+    const long = simulate(snapshot, { ...DEFAULT_INPUTS, endMonth: "2035-12" });
+    const short = simulate(snapshot, {
+      ...DEFAULT_INPUTS,
+      startMonth: "2024-01",
+      endMonth: "2035-12",
+    });
+
+    expect(short.assumedAnnual!.etf).toBeCloseTo(long.assumedAnnual!.etf, 10);
+    expect(short.assumedAnnual!.gold).toBeCloseTo(long.assumedAnnual!.gold, 10);
+    expect(short.fittedOver).toEqual(long.fittedOver);
+    expect(short.fittedOver!.from).toBe(snapshot.months[0].month);
+
+    // And it lands somewhere a decade of Vietnamese data can justify.
+    expect(long.assumedAnnual!.etf).toBeGreaterThan(0.05);
+    expect(long.assumedAnnual!.etf).toBeLessThan(0.18);
+  });
+
   test("orders channels by return, best first", () => {
     const r = simulate(snapshot, DEFAULT_INPUTS);
     expect(r.channels.map((c) => c.key)).toEqual(["gold", "etf", "bank"]);

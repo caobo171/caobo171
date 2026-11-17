@@ -107,6 +107,8 @@ export interface SimulationResult {
   projectedFrom: string | null;
   /** The annual growth assumed beyond the data, per channel. */
   assumedAnnual: Record<ChannelKey, number> | null;
+  /** The span the growth rates were fitted over — always the whole history. */
+  fittedOver: { from: string; to: string } | null;
   /** Best return first. */
   channels: ChannelResult[];
 }

@@ -61,21 +61,45 @@ const ACCENT: Record<ChannelKey, "amber" | "indigo" | "gray"> = {
 
 const digits = (s: string) => Number(s.replace(/\D/g, "")) || 0;
 
+function InfoDot({ text }: { text: string }) {
+  return (
+    <Tooltip content={text}>
+      <span
+        tabIndex={0}
+        role="note"
+        aria-label={text}
+        style={{ cursor: "help", display: "inline-flex", color: "var(--gray-9)" }}
+      >
+        <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden focusable="false">
+          <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.3" />
+          <circle cx="8" cy="4.7" r="0.95" fill="currentColor" />
+          <path d="M8 7.2v4.6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      </span>
+    </Tooltip>
+  );
+}
+
 function Field({
   label,
   value,
+  help,
   children,
 }: {
   label: string;
   value: string;
+  help?: string;
   children: React.ReactNode;
 }) {
   return (
     <Box>
       <Flex justify="between" align="baseline" gap="2" mb="1">
-        <Text size="1" color="gray">
-          {label}
-        </Text>
+        <Flex align="center" gap="1">
+          <Text size="1" color="gray">
+            {label}
+          </Text>
+          {help ? <InfoDot text={help} /> : null}
+        </Flex>
         <Text size="2" weight="bold" style={{ textAlign: "right" }}>
           {value}
         </Text>
@@ -316,7 +340,11 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
               </SegmentedControl.Root>
             </Box>
 
-            <Field label={t.initialCapital} value={`${plain(draft.initialCapital, lang)} ₫`}>
+            <Field
+              label={t.initialCapital}
+              value={`${plain(draft.initialCapital, lang)} ₫`}
+              help={t.initialCapitalHelp}
+            >
               <TextField.Root
                 size="2"
                 inputMode="numeric"
@@ -444,6 +472,9 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
             <Callout.Text>
               {t.projectionNote(
                 monthName(result.projectedFrom, lang),
+                result.fittedOver
+                  ? `${monthName(result.fittedOver.from, lang)} → ${monthName(result.fittedOver.to, lang)}`
+                  : "",
                 percent(result.assumedAnnual.etf, 1, lang),
                 percent(result.assumedAnnual.gold, 1, lang),
                 percent(result.assumedAnnual.bank, 1, lang),
@@ -509,11 +540,10 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
                     <Table.ColumnHeaderCell>{t.thIdleCash}</Table.ColumnHeaderCell>
                     <Table.ColumnHeaderCell>{t.thDeepestFall}</Table.ColumnHeaderCell>
                     <Table.ColumnHeaderCell>
-                      <Tooltip content={t.afterInflationHelp}>
-                        <span style={{ textDecoration: "underline dotted", cursor: "help" }}>
-                          {t.thAfterInflation}
-                        </span>
-                      </Tooltip>
+                      <Flex align="center" gap="1">
+                        {t.thAfterInflation}
+                        <InfoDot text={t.afterInflationHelp} />
+                      </Flex>
                     </Table.ColumnHeaderCell>
                   </Table.Row>
                 </Table.Header>

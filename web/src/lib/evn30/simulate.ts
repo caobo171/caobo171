@@ -121,11 +121,11 @@ function buildRows(snapshot: Snapshot, startMonth: string, endMonth: string): Ro
   const lastReal = snapshot.months[snapshot.months.length - 1];
   if (!endMonth || endMonth <= lastReal.month || !history.length) return history;
 
-  // Fit on the window the reader actually chose, so the assumption reflects the
-  // period they are looking at.
-  const basis = snapshot.months.filter((m) => m.month >= startMonth);
-  const etfGrowth = logLinearMonthlyGrowth(basis.map((m) => m.etf));
-  const goldGrowth = logLinearMonthlyGrowth(basis.map((m) => m.goldBuy));
+  // Fit on the WHOLE history, never the chosen window. A reader looking at the
+  // last two years would otherwise have a bull run extrapolated for a decade —
+  // the fit would learn the window rather than the asset.
+  const etfGrowth = logLinearMonthlyGrowth(snapshot.months.map((m) => m.etf));
+  const goldGrowth = logLinearMonthlyGrowth(snapshot.months.map((m) => m.goldBuy));
   const spread = lastReal.goldSell / lastReal.goldBuy;
 
   const rows = [...history];
@@ -174,6 +174,7 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
     etfFees: 0,
     projectedFrom: null,
     assumedAnnual: null,
+    fittedOver: null,
     channels: [],
   };
   if (!rows.length) return empty;
@@ -358,15 +359,13 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
     projectedFrom: isProjection ? (months.find((m) => m.projected)?.month ?? null) : null,
     assumedAnnual: isProjection
       ? {
-          etf: logLinearMonthlyGrowth(
-            snapshot.months.filter((m) => m.month >= inputs.startMonth).map((m) => m.etf),
-          ) ** 12 - 1,
-          gold:
-            logLinearMonthlyGrowth(
-              snapshot.months.filter((m) => m.month >= inputs.startMonth).map((m) => m.goldBuy),
-            ) ** 12 - 1,
+          etf: logLinearMonthlyGrowth(snapshot.months.map((m) => m.etf)) ** 12 - 1,
+          gold: logLinearMonthlyGrowth(snapshot.months.map((m) => m.goldBuy)) ** 12 - 1,
           bank: rateFor(snapshot.deposit, endYear) / 100,
         }
+      : null,
+    fittedOver: isProjection
+      ? { from: snapshot.months[0].month, to: snapshot.months[snapshot.months.length - 1].month }
       : null,
     firstContribution: months[0].contribution,
     lastContribution: months[months.length - 1].contribution,

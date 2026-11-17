@@ -17,8 +17,9 @@ export interface Copy {
   monthLabel: string;
   yearLabel: string;
   initialCapital: string;
+  initialCapitalHelp: string;
   projectedBadge: string;
-  projectionNote: (from: string, etf: string, gold: string, bank: string) => string;
+  projectionNote: (from: string, fitted: string, etf: string, gold: string, bank: string) => string;
   windowLength: (months: number) => string;
   iSaveLabel: string;
   modePercent: string;
@@ -109,9 +110,11 @@ const EN: Copy = {
   monthLabel: "Month",
   yearLabel: "Year",
   initialCapital: "Capital I already have",
+  initialCapitalHelp:
+    "Assumed to be invested in full on the start month, into each of the three channels, under exactly the same rules as every other month — so part of it waits as cash if it cannot buy a whole lot of the ETF or a whole chỉ of gold. It is counted as capital paid in, and earns from the first month onwards.",
   projectedBadge: "Assumed from here on",
-  projectionNote: (from, etf, gold, bank) =>
-    `From ${from} onwards there are no prices yet, so the page assumes each channel carries on at the rate it managed over the period you chose — ETF ${etf}, gold ${gold}, bank ${bank} a year, fitted by least squares through every month. That is an assumption, not a forecast, and the dashed part of the chart is where it begins.`,
+  projectionNote: (from, fitted, etf, gold, bank) =>
+    `From ${from} onwards there are no prices yet, so the page assumes each channel carries on at the rate it managed across the whole record, ${fitted} — ETF ${etf}, gold ${gold}, bank ${bank} a year, fitted by least squares through every month. The rate is deliberately taken from the full history rather than the window you picked, so a short run of good years cannot be extrapolated for a decade. It is still an assumption, not a forecast: a decade that returned this much is no promise the next one will. The dashed part of the chart is where it begins.`,
   windowLength: (m) => (m === 1 ? "1 month" : `${m} months`),
   iSaveLabel: "I save",
   modePercent: "a share of salary",
@@ -244,9 +247,11 @@ const VI: Copy = {
   monthLabel: "Tháng",
   yearLabel: "Năm",
   initialCapital: "Vốn hiện có",
+  initialCapitalHelp:
+    "Giả định toàn bộ số này được đầu tư ngay tại tháng bắt đầu, vào cả ba kênh, theo đúng luật như mọi tháng khác — nên một phần có thể nằm chờ dưới dạng tiền mặt nếu chưa đủ mua trọn một lô ETF hay một chỉ vàng. Nó được tính vào vốn đã bỏ ra, và sinh lời ngay từ tháng đầu tiên.",
   projectedBadge: "Từ đây trở đi là giả định",
-  projectionNote: (from, etf, gold, bank) =>
-    `Từ ${from} trở đi chưa có giá thật, nên trang giả định mỗi kênh tiếp tục tăng đúng bằng tốc độ nó đạt được trong khoảng bạn chọn — ETF ${etf}, vàng ${gold}, tiết kiệm ${bank} mỗi năm, khớp bằng hồi quy bình phương nhỏ nhất qua tất cả các tháng. Đây là giả định, không phải dự báo, và phần nét đứt trên biểu đồ là chỗ nó bắt đầu.`,
+  projectionNote: (from, fitted, etf, gold, bank) =>
+    `Từ ${from} trở đi chưa có giá thật, nên trang giả định mỗi kênh tiếp tục tăng đúng bằng tốc độ nó đạt được trên toàn bộ dữ liệu, ${fitted} — ETF ${etf}, vàng ${gold}, tiết kiệm ${bank} mỗi năm, khớp bằng hồi quy bình phương nhỏ nhất qua tất cả các tháng. Tốc độ này cố tình lấy từ toàn bộ lịch sử chứ không lấy từ khoảng bạn chọn, để một vài năm tăng mạnh không bị kéo dài thành cả thập kỷ. Dù vậy đây vẫn là giả định, không phải dự báo: một thập kỷ đã tăng như thế không hứa hẹn thập kỷ sau cũng vậy. Phần nét đứt trên biểu đồ là chỗ nó bắt đầu.`,
   windowLength: (m) => `${m} tháng`,
   iSaveLabel: "Tôi để dành",
   modePercent: "theo % lương",
