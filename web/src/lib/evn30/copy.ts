@@ -57,6 +57,7 @@ export interface Copy {
   bank: string;
   onWhatYouPaidIn: string;
   afterInflationShort: string;
+  realLine: (value: string, profit: string) => string;
   incomeLine: (amount: string, rate: string) => string;
   incomeHelp: string;
   monthlySpend: string;
@@ -189,7 +190,7 @@ const EN: Copy = {
   paidIn: "Capital paid in",
   inTodaysMoney: (a) => `≈ ${a} in today's money`,
   paidInHelp:
-    "One sum, stated two ways: what you actually hand over, and what that adds up to in today's purchasing power. The second is the smaller one whenever much of the plan lies in the future, because đồng paid in 2034 buy less than đồng paid now — it is not a loss. What the money turned into is in the three cards below.",
+    "One sum, stated two ways: what you actually hand over, and what that adds up to in today's purchasing power. Which of the two is larger depends on when you paid. Money paid in the past restates upwards — 4.7M ₫ in 2016 bought what takes more than 6M ₫ now — while money paid in 2034 restates downwards, because those đồng will buy less. Neither direction is a gain or a loss. What the money turned into is in the three cards below.",
   windowLabel: "Window",
   inflationLabel: "Inflation over it",
   inflationHelp: (annual) =>
@@ -201,6 +202,7 @@ const EN: Copy = {
   bank: "Bank savings",
   onWhatYouPaidIn: "on what you paid in",
   afterInflationShort: "after inflation, in today's money",
+  realLine: (value, profit) => `${value} in today's money (${profit})`,
   incomeLine: (amount, rate) => `${amount} a month if you drew ${rate} a year`,
   incomeHelp:
     "A rule of thumb, not a promise. Drawing 4% of the pot a year is a common planning assumption for making savings last, and the figure here is in today's money. It takes no account of tax, of what you actually spend, or of the pot falling in a bad year. This page is a record of prices, not financial advice.",
@@ -377,7 +379,7 @@ const VI: Copy = {
   paidIn: "Vốn đã bỏ ra",
   inTodaysMoney: (a) => `≈ ${a} theo giá hôm nay`,
   paidInHelp:
-    "Vẫn là một khoản tiền, chỉ nói theo hai cách: số bạn thực sự bỏ ra, và số đó quy về sức mua của hôm nay. Vế sau nhỏ hơn khi phần lớn kế hoạch nằm ở tương lai, vì đồng tiền bỏ ra năm 2034 mua được ít hơn đồng tiền bây giờ — đây không phải khoản lỗ. Số tiền đó thành bao nhiêu thì xem ba ô bên dưới.",
+    "Vẫn là một khoản tiền, chỉ nói theo hai cách: số bạn thực sự bỏ ra, và số đó quy về sức mua của hôm nay. Vế nào lớn hơn là tuỳ bạn bỏ tiền ra vào lúc nào. Tiền của quá khứ quy về hôm nay thì to ra — 4,7 triệu ₫ năm 2016 mua được bằng hơn 6 triệu ₫ bây giờ; tiền của tương lai thì nhỏ đi, vì đồng tiền năm 2034 mua được ít hơn. Cả hai chiều đều không phải lãi cũng không phải lỗ. Số tiền đó thành bao nhiêu thì xem ba ô bên dưới.",
   windowLabel: "Khoảng thời gian",
   inflationLabel: "Lạm phát trong kỳ",
   inflationHelp: (annual) =>
@@ -389,6 +391,7 @@ const VI: Copy = {
   bank: "Gửi tiết kiệm",
   onWhatYouPaidIn: "so với vốn bỏ ra",
   afterInflationShort: "sau lạm phát, theo giá hôm nay",
+  realLine: (value, profit) => `${value} theo giá hôm nay (${profit})`,
   incomeLine: (amount, rate) => `${amount}/tháng nếu mỗi năm rút ${rate}`,
   incomeHelp:
     "Đây là quy ước tham khảo, không phải cam kết. Rút 4% danh mục mỗi năm là giả định thường dùng khi ước lượng khoản tiết kiệm trụ được bao lâu, và con số ở đây đã quy về giá hôm nay. Nó chưa tính thuế, chưa tính bạn thực sự tiêu bao nhiêu, cũng chưa tính những năm danh mục sụt giảm. Trang này là bản ghi giá, không phải lời khuyên đầu tư.",

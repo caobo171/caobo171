@@ -47,6 +47,9 @@ import { Methodology } from "./methodology";
 import { Sources } from "./sources";
 import { ThemeToggle } from "./theme";
 
+/** The furthest year any control offers. */
+const LAST_YEAR = 2100;
+
 /** How long a run to open up when the reader moves the start past the end. */
 const DEFAULT_RUN_MONTHS = 12;
 
@@ -366,7 +369,9 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
   const lastRealMonth = snapshot.months[snapshot.months.length - 1].month;
   const lastRealYear = Number(lastRealMonth.slice(0, 4));
   const years = [...new Set(snapshot.months.map((m) => Number(m.month.slice(0, 4))))];
-  for (let y = lastRealYear + 1; y <= lastRealYear + 20; y++) years.push(y);
+  // Out to the end of the century: someone starting now retires in the 2070s,
+  // and a milestone like a child runs for twenty years after that.
+  for (let y = lastRealYear + 1; y <= LAST_YEAR; y++) years.push(y);
   const horizon = `${years[years.length - 1]}-12`;
 
   // Milestones live in the draft like every other control, so one Apply moves
@@ -831,10 +836,14 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
                       {signedMoney(c.profit, lang)} {t.onWhatYouPaidIn}
                     </Text>
                   </Tooltip>
-                  {/* The nominal figure on its own invites "and after inflation?" */}
+                  {/* The nominal figure on its own invites "and after
+                      inflation?" — and the answer a reader wants first is what
+                      the pot is actually worth, not only how much of it is
+                      gain. On a run to 2100 the two differ by an order of
+                      magnitude, and the card used to state only the gain. */}
                   <Flex align="center" gap="1" mb="2">
                     <Text as="div" size="2" color="gray">
-                      {signedMoney(c.realProfit, lang)} {t.afterInflationShort}
+                      {t.realLine(money(c.realValue, lang), signedMoney(c.realProfit, lang))}
                     </Text>
                     <InfoDot text={t.afterInflationHelp} />
                   </Flex>

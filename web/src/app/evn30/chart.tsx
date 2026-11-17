@@ -30,7 +30,8 @@ function axisTick(vnd: number, lang: Lang): string {
       maximumFractionDigits: dp,
     });
   if (vnd >= 1_000_000_000) {
-    return lang === "vi" ? `${n(vnd / 1e9, 1)} tỷ` : `${n(vnd / 1e9, 1)}B`;
+    if (vnd < 1e12) return lang === "vi" ? `${n(vnd / 1e9, 1)} tỷ` : `${n(vnd / 1e9, 1)}B`;
+    return lang === "vi" ? `${n(vnd / 1e12, 1)} ngh.tỷ` : `${n(vnd / 1e12, 1)}T`;
   }
   return lang === "vi" ? `${n(vnd / 1e6, 0)} tr` : `${n(vnd / 1e6, 0)}M`;
 }

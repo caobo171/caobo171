@@ -25,6 +25,15 @@ describe("money — billions tier", () => {
     expect(signedMoney(2_500_000_000, "en")).toBe("+2.50B ₫");
   });
 
+  test("goes one tier further for a very long run", () => {
+    // Eighty years of compounding reaches the thousands of billions, where
+    // "20.872,34 tỷ ₫" is the same unreadable shape one tier up.
+    expect(money(20_872_000_000_000, "vi")).toBe("20,87 nghìn tỷ ₫");
+    expect(money(20_872_000_000_000, "en")).toBe("20.87T ₫");
+    expect(money(1_000_000_000_000, "vi")).toBe("1,00 nghìn tỷ ₫");
+    expect(money(999_000_000_000, "vi")).toBe("999,00 tỷ ₫");
+  });
+
   test("leaves the smaller tiers alone", () => {
     expect(money(2_004_224, "en")).toBe("2.0M ₫");
     expect(money(250_000, "vi")).toBe("250 nghìn ₫");

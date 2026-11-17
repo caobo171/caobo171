@@ -32,7 +32,10 @@ export function money(vnd: number, lang: Lang = "en"): string {
   if (size < 1_000_000_000) {
     return `${fmt(lang, 1).format(vnd / 1_000_000)}${lang === "vi" ? " triệu ₫" : "M ₫"}`;
   }
-  return `${fmt(lang, 2).format(vnd / 1_000_000_000)}${lang === "vi" ? " tỷ ₫" : "B ₫"}`;
+  if (size < 1_000_000_000_000) {
+    return `${fmt(lang, 2).format(vnd / 1_000_000_000)}${lang === "vi" ? " tỷ ₫" : "B ₫"}`;
+  }
+  return `${fmt(lang, 2).format(vnd / 1_000_000_000_000)}${lang === "vi" ? " nghìn tỷ ₫" : "T ₫"}`;
 }
 
 /** Always carries a sign, so a profit and a loss are told apart at a glance. */
