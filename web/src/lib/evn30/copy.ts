@@ -45,6 +45,7 @@ export interface Copy {
   inTodaysMoney: string;
   windowLabel: string;
   inflationLabel: string;
+  inflationHelp: (annual: string) => string;
   pricedLabel: string;
 
   gold: string;
@@ -146,6 +147,8 @@ const EN: Copy = {
   inTodaysMoney: "In today's money",
   windowLabel: "Window",
   inflationLabel: "Inflation over it",
+  inflationHelp: (annual) =>
+    `Compounded across the whole window, which works out at ${annual} a year — close to Vietnam's long-run average, so the total looks alarming only because it covers so many years. Real CPI up to the last year the World Bank has published, carried forward at 3.3% a year after that.`,
   pricedLabel: "Priced",
 
   gold: "SJC gold",
@@ -286,6 +289,8 @@ const VI: Copy = {
   inTodaysMoney: "Quy ra tiền hôm nay",
   windowLabel: "Khoảng thời gian",
   inflationLabel: "Lạm phát trong kỳ",
+  inflationHelp: (annual) =>
+    `Đây là mức luỹ kế cho cả khoảng thời gian, tính ra khoảng ${annual} mỗi năm — xấp xỉ mức trung bình dài hạn của Việt Nam, nên con số tổng chỉ trông đáng sợ vì nó gộp nhiều năm. Dùng CPI thật đến năm gần nhất World Bank công bố, sau đó tạm tính tiếp 3,3% mỗi năm.`,
   pricedLabel: "Giá ngày",
 
   gold: "Vàng SJC",

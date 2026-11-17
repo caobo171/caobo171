@@ -178,12 +178,15 @@ function A11ySlider({
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, help }: { label: string; value: string; help?: string }) {
   return (
     <Box>
-      <Text as="div" size="1" color="gray">
-        {label}
-      </Text>
+      <Flex align="center" gap="1">
+        <Text as="div" size="1" color="gray">
+          {label}
+        </Text>
+        {help ? <InfoDot text={help} /> : null}
+      </Flex>
       <Text as="div" size="4" weight="bold" style={{ letterSpacing: "-0.01em" }}>
         {value}
       </Text>
@@ -232,6 +235,10 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
   const horizon = `${years[years.length - 1]}-12`;
 
   // A projected run is not "priced" on any real date — it ends on an assumed one.
+  const inflationPerYear = result.months.length
+    ? result.inflationFactor ** (12 / result.months.length) - 1
+    : 0;
+
   const priced = result.projectedFrom
     ? monthName(result.months[result.months.length - 1]?.month ?? lastRealMonth, lang)
     : dayName(snapshot.latest.date, lang);
@@ -481,7 +488,14 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
             />
             <Stat
               label={t.inflationLabel}
-              value={`+${percent(result.inflationFactor - 1, 1, lang)}`}
+              // The cumulative figure alone reads as a catastrophe; the annual
+              // equivalent is what tells you it is ordinary.
+              value={`+${percent(result.inflationFactor - 1, 1, lang)} · ${percent(
+                inflationPerYear,
+                1,
+                lang,
+              )}${lang === "vi" ? "/năm" : "/yr"}`}
+              help={t.inflationHelp(`${percent(inflationPerYear, 1, lang)}`)}
             />
             <Stat label={t.pricedLabel} value={priced} />
           </Flex>
