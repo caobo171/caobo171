@@ -31,13 +31,35 @@ describe("simulate", () => {
     expect(r.paidInToday).toBeCloseTo(990_121_907.09, 0);
     expect(r.inflationFactor).toBeCloseTo(1.36415, 4);
 
-    expect(channel(r, "gold").value).toBeCloseTo(2_004_224_688.99, 0);
-    expect(channel(r, "etf").value).toBeCloseTo(1_579_229_338.99, 0);
-    expect(channel(r, "bank").value).toBeCloseTo(1_155_942_825.34, 0);
+    // The bank never touches `latest`, so its figure is pinned exactly.
+    expect(channel(r, "bank").value).toBeCloseTo(1_146_327_635.41, 0);
+    expect(channel(r, "bank").xirr).toBeCloseTo(0.057623, 5);
 
-    expect(channel(r, "gold").xirr).toBeCloseTo(0.161715, 5);
-    expect(channel(r, "etf").xirr).toBeCloseTo(0.117977, 5);
-    expect(channel(r, "bank").xirr).toBeCloseTo(0.059225, 5);
+    // Gold and the ETF are valued at the latest price, which moves every time
+    // the snapshot is refreshed. Pin what the monthly rows determine — the
+    // holdings and the idle cash — and check the valuation against them, so a
+    // refresh does not break the build but a modelling mistake still does.
+    const gold = channel(r, "gold");
+    const etf = channel(r, "etf");
+    expect(gold.idleCash).toBeCloseTo(174_688.99, 0);
+    expect(etf.idleCash).toBeCloseTo(2_231_338.99, 0);
+    expect(gold.value).toBeCloseTo(149 * snapshot.latest.goldBuy * 100 + gold.idleCash, 0);
+    expect(etf.value).toBeCloseTo(47_400 * snapshot.latest.etf * 1000 + etf.idleCash, 0);
+
+    // Tolerant to 0.05pp — a day's price move is worth about 0.01pp here.
+    expect(gold.xirr).toBeCloseTo(0.1617, 3);
+    expect(etf.xirr).toBeCloseTo(0.118, 3);
+  });
+
+  test("treats the deposit rate as effective, not nominal", () => {
+    // A 12-month deposit quoted at 6.5% pays 6.5% over the year. Dividing by 12
+    // and compounding would pay 6.70%, flattering the bank by 0.16pp a year.
+    const flat = { ...snapshot, deposit: { "2016": 6.5 } };
+    const oneYear = simulate(flat, { ...DEFAULT_INPUTS, mode: "fixed", fixedAmount: 0 });
+    expect(oneYear.channels.find((c) => c.key === "bank")!.value).toBe(0);
+
+    const r = simulate(snapshot, DEFAULT_INPUTS);
+    expect(channel(r, "bank").xirr).toBeLessThan(0.058);
   });
 
   test("orders channels by return, best first", () => {
@@ -59,7 +81,7 @@ describe("simulate", () => {
     const r = simulate(snapshot, DEFAULT_INPUTS);
     const gold = channel(r, "gold");
     expect(gold.idleCash).toBeCloseTo(174_688.99, 0);
-    expect(gold.unitsLabel).toBe("14.9 lượng");
+    expect(gold.units).toBe(149);
     expect(gold.monthsBought).toBe(121);
   });
 
@@ -69,7 +91,7 @@ describe("simulate", () => {
     expect(etf.idleCash).toBeCloseTo(774_337, 0);
     expect(etf.idleCash).toBeGreaterThan(0);
     expect(etf.idleCash).toBeLessThan(4_000_000);
-    expect(etf.unitsLabel).toBe("30,600 units");
+    expect(etf.units).toBe(30_600);
   });
 
   test("zero saving yields zeroes, not NaN", () => {
@@ -90,7 +112,7 @@ describe("simulate", () => {
       ...DEFAULT_INPUTS,
       mode: "fixed",
       fixedAmount: 100_000,
-      startYear: 2024,
+      startMonth: "2024-01",
     });
     const gold = channel(r, "gold");
     expect(r.paidIn).toBe(3_500_000);
@@ -101,21 +123,42 @@ describe("simulate", () => {
     expect(gold.xirr).toBeCloseTo(0, 6);
   });
 
-  test("a +0% ceiling keeps the salary flat at today's figure", () => {
-    const r = simulate(snapshot, { ...DEFAULT_INPUTS, ceilingPct: 0 });
+  test("a ceiling at the starting salary keeps it flat", () => {
+    const r = simulate(snapshot, {
+      ...DEFAULT_INPUTS,
+      salaryStart: 30_000_000,
+      salaryCeiling: 30_000_000,
+    });
     expect(r.salaryStart).toBeCloseTo(30_000_000, 0);
     expect(r.salaryEnd).toBeCloseTo(30_000_000, 0);
     expect(r.firstContribution).toBeCloseTo(7_500_000, 0);
+    expect(r.lastContribution).toBeCloseTo(7_500_000, 0);
   });
 
   test("a short window still produces a finite annual return", () => {
-    const r = simulate(snapshot, { ...DEFAULT_INPUTS, startYear: 2024 });
+    const r = simulate(snapshot, { ...DEFAULT_INPUTS, startMonth: "2024-01" });
     expect(r.months).toHaveLength(35);
     for (const c of r.channels) {
       expect(Number.isFinite(c.xirr)).toBe(true);
       expect(Math.abs(c.xirr)).toBeLessThan(3);
     }
-    expect(channel(r, "etf").xirr).toBeCloseTo(0.148446, 5);
+    // Looser than the long window: over under three years a day's price move
+    // has far more leverage on the annualised figure.
+    expect(channel(r, "etf").xirr).toBeCloseTo(0.148, 2);
+  });
+
+  test("can start at any month, not only January", () => {
+    const r = simulate(snapshot, { ...DEFAULT_INPUTS, startMonth: "2020-07" });
+    expect(r.months[0].month).toBe("2020-07");
+    expect(r.months).toHaveLength(77);
+    for (const c of r.channels) expect(Number.isFinite(c.xirr)).toBe(true);
+  });
+
+  test("a start month past the data yields an empty, harmless result", () => {
+    const r = simulate(snapshot, { ...DEFAULT_INPUTS, startMonth: "2099-01" });
+    expect(r.months).toHaveLength(0);
+    expect(r.channels).toHaveLength(0);
+    expect(r.paidIn).toBe(0);
   });
 
   test("falls back to the latest known year when a rate table runs short", () => {

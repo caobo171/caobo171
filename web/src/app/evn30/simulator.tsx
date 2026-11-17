@@ -19,15 +19,21 @@ import {
   TextField,
 } from "@radix-ui/themes";
 import Link from "next/link";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
-import { money, percent, plain, signedMoney } from "@/lib/evn30/format";
+import { GITHUB, WELE } from "@/app/links";
+import { COPY, LANGS, type Lang } from "@/lib/evn30/copy";
+import { dayName, money, monthName, percent, plain, signedMoney, tael } from "@/lib/evn30/format";
 import { DEFAULT_INPUTS, simulate } from "@/lib/evn30/simulate";
 import {
   parseInputs,
+  parseLang,
+  readServerLangRaw,
   readServerRaw,
+  readStoredLangRaw,
   readStoredRaw,
   saveInputs,
+  saveLang,
   subscribeToStored,
 } from "@/lib/evn30/storage";
 import type { ChannelKey, Inputs, Snapshot } from "@/lib/evn30/types";
@@ -35,18 +41,19 @@ import type { ChannelKey, Inputs, Snapshot } from "@/lib/evn30/types";
 import { Chart } from "./chart";
 import { Sources } from "./sources";
 
-const START_YEARS = [2016, 2018, 2020, 2022, 2024];
-
-const ACCENT: Record<ChannelKey, "amber" | "indigo" | "gray"> = {
-  gold: "amber",
-  etf: "indigo",
-  bank: "gray",
-};
+/** A plan shorter than this annualises into nonsense, so the slider stops there. */
+const MIN_MONTHS = 12;
 
 const DOT: Record<ChannelKey, string> = {
   gold: "var(--amber-9)",
   etf: "var(--indigo-9)",
   bank: "var(--gray-8)",
+};
+
+const ACCENT: Record<ChannelKey, "amber" | "indigo" | "gray"> = {
+  gold: "amber",
+  etf: "indigo",
+  bank: "gray",
 };
 
 const digits = (s: string) => Number(s.replace(/\D/g, "")) || 0;
@@ -62,11 +69,11 @@ function Field({
 }) {
   return (
     <Box>
-      <Flex justify="between" align="baseline" mb="1">
+      <Flex justify="between" align="baseline" gap="2" mb="1">
         <Text size="1" color="gray">
           {label}
         </Text>
-        <Text size="2" weight="bold">
+        <Text size="2" weight="bold" style={{ textAlign: "right" }}>
           {value}
         </Text>
       </Flex>
@@ -75,14 +82,45 @@ function Field({
   );
 }
 
+function A11ySlider({
+  label,
+  ...rest
+}: React.ComponentProps<typeof Slider> & { label: string }) {
+  const host = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    host.current
+      ?.querySelectorAll('[role="slider"]')
+      .forEach((el) => el.setAttribute("aria-label", label));
+  }, [label]);
+  return (
+    <div ref={host}>
+      <Slider {...rest} />
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <Box>
+      <Text as="div" size="1" color="gray">
+        {label}
+      </Text>
+      <Text as="div" size="4" weight="bold" style={{ letterSpacing: "-0.01em" }}>
+        {value}
+      </Text>
+    </Box>
+  );
+}
+
 export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
-  // What the browser remembers. The server has none, so the first paint uses the
-  // defaults and React swaps in the stored values itself — no effect, no mismatch.
+  const langRaw = useSyncExternalStore(subscribeToStored, readStoredLangRaw, readServerLangRaw);
+  const [langEdit, setLangEdit] = useState<Lang | null>(null);
+  const lang = langEdit ?? parseLang(langRaw);
+  const t = COPY[lang];
+
   const storedRaw = useSyncExternalStore(subscribeToStored, readStoredRaw, readServerRaw);
   const stored = useMemo(() => parseInputs(storedRaw) ?? DEFAULT_INPUTS, [storedRaw]);
 
-  // null until the reader touches a control, so what they remember wins until
-  // they change their mind.
   const [draftEdit, setDraftEdit] = useState<Inputs | null>(null);
   const [appliedEdit, setAppliedEdit] = useState<Inputs | null>(null);
   const draft = draftEdit ?? stored;
@@ -94,8 +132,8 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
   };
 
   const result = useMemo(() => simulate(snapshot, applied), [snapshot, applied]);
-  // The line under the controls describes what the controls currently say, not
-  // what was last applied — otherwise it contradicts the sliders above it.
+  // Describes what the controls say now, not what was last applied — otherwise
+  // the line contradicts the sliders directly above it.
   const preview = useMemo(() => simulate(snapshot, draft), [snapshot, draft]);
   const dirty = JSON.stringify(draft) !== JSON.stringify(applied);
   const set = <K extends keyof Inputs>(key: K, value: Inputs[K]) =>
@@ -103,6 +141,16 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
 
   const percentMode = draft.mode === "percent";
   const winner = result.channels[0];
+  const priced = dayName(snapshot.latest.date, lang);
+
+  // The slider indexes the snapshot's own months, so it can never point outside
+  // the data however the stored value was edited.
+  const maxIndex = Math.max(0, snapshot.months.length - MIN_MONTHS);
+  const foundIndex = snapshot.months.findIndex((m) => m.month === draft.startMonth);
+  const startIndex = Math.min(maxIndex, foundIndex < 0 ? 0 : foundIndex);
+
+  const holding = (key: ChannelKey, units: number) =>
+    key === "gold" ? tael(units, lang) : key === "etf" ? t.fundUnits(plain(units, lang)) : t.bankHolding;
 
   return (
     <Box>
@@ -112,20 +160,43 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
         style={{ borderBottom: "1px solid var(--gray-6)", background: "var(--gray-2)" }}
       >
         <Container size="4">
-          <Flex justify="between" align="center">
-            <Text size="2" weight="bold">
+          <Flex justify="between" align="center" gap="3">
+            <Text size="2" weight="bold" style={{ whiteSpace: "nowrap" }}>
               Nguyễn Văn Cao
             </Text>
-            <Flex gap="4">
+            <Flex gap="4" align="center" wrap="wrap" justify="end">
               <RadixLink asChild size="2" color="gray">
-                <Link href="/">Home</Link>
+                <Link href="/">{t.home}</Link>
               </RadixLink>
               <RadixLink asChild size="2" color="gray">
-                <Link href="/resume">Resume</Link>
+                <Link href="/resume">{t.resume}</Link>
               </RadixLink>
-              <RadixLink size="2" href="https://wele-learn.com" target="_blank" color="gray">
+              <RadixLink size="2" href={WELE} target="_blank" rel="noopener noreferrer" color="gray">
                 WELE
               </RadixLink>
+              <RadixLink
+                size="2"
+                href={GITHUB}
+                target="_blank"
+                rel="noopener noreferrer"
+                color="gray"
+              >
+                GitHub
+              </RadixLink>
+              <SegmentedControl.Root
+                size="1"
+                value={lang}
+                onValueChange={(v) => {
+                  setLangEdit(v as Lang);
+                  saveLang(v as Lang);
+                }}
+              >
+                {LANGS.map((l) => (
+                  <SegmentedControl.Item key={l} value={l}>
+                    {l.toUpperCase()}
+                  </SegmentedControl.Item>
+                ))}
+              </SegmentedControl.Root>
             </Flex>
           </Flex>
         </Container>
@@ -133,61 +204,59 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
 
       <Container size="3" px="4" py="6">
         <Heading size="8" mb="2" style={{ letterSpacing: "-0.02em" }}>
-          What if I&apos;d just kept buying?
+          {t.title}
         </Heading>
         <Text as="p" size="3" color="gray" mb="5">
-          A share of every paycheque, every month, into three places Vietnamese savers actually
-          use. Real prices, real inflation, real fees — and the cash that could not buy a whole lot
-          stays cash.
+          {t.subtitle}
         </Text>
 
         <Card size="2">
           <Grid columns={{ initial: "1", sm: "2" }} gapX="5" gapY="4">
-            <Box>
-              <Text size="1" color="gray" as="div" mb="1">
-                Starting from
-              </Text>
-              <SegmentedControl.Root
+            <Field
+              label={t.startingFrom}
+              value={`${monthName(draft.startMonth, lang)} · ${t.windowLength(preview.months.length)}`}
+            >
+              <A11ySlider
                 size="1"
-                value={String(draft.startYear)}
-                onValueChange={(v) => set("startYear", Number(v))}
-              >
-                {START_YEARS.map((y) => (
-                  <SegmentedControl.Item key={y} value={String(y)}>
-                    {y}
-                  </SegmentedControl.Item>
-                ))}
-              </SegmentedControl.Root>
-            </Box>
+                label={t.startingFrom}
+                value={[startIndex]}
+                min={0}
+                max={maxIndex}
+                step={1}
+                onValueChange={([v]) => set("startMonth", snapshot.months[v].month)}
+              />
+            </Field>
 
             <Box>
               <Text size="1" color="gray" as="div" mb="1">
-                I save
+                {t.iSaveLabel}
               </Text>
               <SegmentedControl.Root
                 size="1"
                 value={draft.mode}
                 onValueChange={(v) => set("mode", v as Inputs["mode"])}
               >
-                <SegmentedControl.Item value="percent">a share of salary</SegmentedControl.Item>
-                <SegmentedControl.Item value="fixed">a fixed amount</SegmentedControl.Item>
+                <SegmentedControl.Item value="percent">{t.modePercent}</SegmentedControl.Item>
+                <SegmentedControl.Item value="fixed">{t.modeFixed}</SegmentedControl.Item>
               </SegmentedControl.Root>
             </Box>
 
             {percentMode ? (
               <>
-                <Field label="My salary today" value={`${plain(draft.salaryToday)} ₫`}>
+                <Field label={t.salaryStart} value={`${plain(draft.salaryStart, lang)} ₫`}>
                   <TextField.Root
                     size="2"
                     inputMode="numeric"
-                    value={plain(draft.salaryToday)}
-                    onChange={(e) => set("salaryToday", digits(e.target.value))}
+                    aria-label={t.salaryStart}
+                    value={plain(draft.salaryStart, lang)}
+                    onChange={(e) => set("salaryStart", digits(e.target.value))}
                   />
                 </Field>
 
-                <Field label="I save" value={`${draft.savePct}% of it`}>
-                  <Slider
+                <Field label={t.savePct} value={t.savePctValue(draft.savePct)}>
+                  <A11ySlider
                     size="1"
+                    label={t.savePct}
                     value={[draft.savePct]}
                     min={0}
                     max={100}
@@ -196,9 +265,13 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
                   />
                 </Field>
 
-                <Field label="Raise each year" value={`${draft.raisePct}%`}>
-                  <Slider
+                <Field
+                  label={t.raiseEachYear}
+                  value={`${percent(draft.raisePct / 100, 0, lang)} · ${money(preview.salaryEnd, lang)} ${t.salaryToday}`}
+                >
+                  <A11ySlider
                     size="1"
+                    label={t.raiseEachYear}
                     value={[draft.raisePct]}
                     min={0}
                     max={20}
@@ -207,20 +280,23 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
                   />
                 </Field>
 
-                <Field label="…but no higher than" value={`+${draft.ceilingPct}%`}>
-                  <Slider
-                    size="1"
-                    value={[draft.ceilingPct]}
-                    min={0}
-                    max={200}
-                    step={10}
-                    onValueChange={([v]) => set("ceilingPct", v)}
+                <Field label={t.ceiling} value={`${plain(draft.salaryCeiling, lang)} ₫`}>
+                  <TextField.Root
+                    size="2"
+                    inputMode="numeric"
+                    aria-label={t.ceiling}
+                    value={plain(draft.salaryCeiling, lang)}
+                    onChange={(e) => set("salaryCeiling", digits(e.target.value))}
                   />
                 </Field>
 
-                <Field label="…up to" value={`${plain(draft.monthlyCapVnd)} ₫/mo`}>
-                  <Slider
+                <Field
+                  label={t.monthlyCap}
+                  value={`${plain(draft.monthlyCapVnd, lang)} ₫${t.perMonth}`}
+                >
+                  <A11ySlider
                     size="1"
+                    label={t.monthlyCap}
                     value={[draft.monthlyCapVnd]}
                     min={1_000_000}
                     max={100_000_000}
@@ -230,11 +306,12 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
                 </Field>
               </>
             ) : (
-              <Field label="Every month I put aside" value={`${plain(draft.fixedAmount)} ₫`}>
+              <Field label={t.fixedAmount} value={`${plain(draft.fixedAmount, lang)} ₫`}>
                 <TextField.Root
                   size="2"
                   inputMode="numeric"
-                  value={plain(draft.fixedAmount)}
+                  aria-label={t.fixedAmount}
+                  value={plain(draft.fixedAmount, lang)}
                   onChange={(e) => set("fixedAmount", digits(e.target.value))}
                 />
               </Field>
@@ -245,35 +322,37 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
 
           <Flex justify="between" align="center" gap="3" wrap="wrap">
             <Text size="2" color="gray">
-              {preview.firstContribution === preview.lastContribution ? (
-                <>
-                  That&apos;s <strong>{money(preview.firstContribution)}</strong> a month, every
-                  month.
-                </>
-              ) : (
-                <>
-                  That&apos;s <strong>{money(preview.firstContribution)}</strong>/month at the
-                  start, rising to <strong>{money(preview.lastContribution)}</strong>
-                  {preview.ceilingYear ? (
-                    <> once the ceiling bites in {preview.ceilingYear}</>
-                  ) : null}
-                  .
-                </>
-              )}
+              {preview.firstContribution === preview.lastContribution
+                ? t.contribFlat(money(preview.firstContribution, lang))
+                : t.contribRising(
+                    money(preview.firstContribution, lang),
+                    money(preview.lastContribution, lang),
+                    preview.ceilingYear,
+                  )}
             </Text>
             <Button size="2" disabled={!dirty} onClick={apply}>
-              {dirty ? "Apply" : "Applied"}
+              {dirty ? t.apply : t.applied}
             </Button>
           </Flex>
         </Card>
 
-        <Text as="p" size="3" my="5">
-          Over {result.months.length} months you&apos;d have paid in{" "}
-          <strong>{money(result.paidIn)}</strong> — worth{" "}
-          <strong>{money(result.paidInToday)}</strong> in today&apos;s money, because prices rose{" "}
-          {percent(result.inflationFactor - 1, 1)} along the way. Here&apos;s where it would have
-          ended up.
-        </Text>
+        <Card size="2" my="4">
+          <Flex gap="6" wrap="wrap">
+            <Stat label={t.paidIn} value={money(result.paidIn, lang)} />
+            <Stat label={t.inTodaysMoney} value={money(result.paidInToday, lang)} />
+            <Stat
+              label={t.windowLabel}
+              value={`${t.windowLength(result.months.length)} · ${
+                result.months.length ? monthName(result.months[0].month, lang) : "—"
+              }`}
+            />
+            <Stat
+              label={t.inflationLabel}
+              value={`+${percent(result.inflationFactor - 1, 1, lang)}`}
+            />
+            <Stat label={t.pricedLabel} value={priced} />
+          </Flex>
+        </Card>
 
         <Grid columns={{ initial: "1", sm: "3" }} gap="3" mb="4">
           {result.channels.map((c) => (
@@ -292,31 +371,31 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
                   aria-hidden
                 />
                 <Text size="1" color="gray">
-                  {c.label}
+                  {t[c.key]}
                 </Text>
               </Flex>
               <Text as="div" size="7" weight="bold" style={{ letterSpacing: "-0.02em" }}>
-                {money(c.value)}
+                {money(c.value, lang)}
               </Text>
               <Text as="div" size="2" color="gray" mb="2">
-                {signedMoney(c.profit)} on what you paid in
+                {signedMoney(c.profit, lang)} {t.onWhatYouPaidIn}
               </Text>
               <Badge color={ACCENT[c.key]} variant="soft">
-                {percent(c.xirr)} a year
+                {percent(c.xirr, 2, lang)} {t.aYear}
               </Badge>
             </Card>
           ))}
         </Grid>
 
         <Card size="2" mb="4">
-          <Chart months={result.months} />
+          <Chart months={result.months} copy={t} lang={lang} latestDate={priced} />
         </Card>
 
         <Tabs.Root defaultValue="summary">
           <Tabs.List>
-            <Tabs.Trigger value="summary">Summary</Tabs.Trigger>
-            <Tabs.Trigger value="months">Month by month</Tabs.Trigger>
-            <Tabs.Trigger value="sources">Where the numbers come from</Tabs.Trigger>
+            <Tabs.Trigger value="summary">{t.tabSummary}</Tabs.Trigger>
+            <Tabs.Trigger value="months">{t.tabMonths}</Tabs.Trigger>
+            <Tabs.Trigger value="sources">{t.tabSources}</Tabs.Trigger>
           </Tabs.List>
 
           <Box pt="4">
@@ -324,57 +403,64 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
               <Table.Root variant="surface" size="1">
                 <Table.Header>
                   <Table.Row>
-                    <Table.ColumnHeaderCell>Channel</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>Holding</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>Bought in</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>Idle cash</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>Deepest fall</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>After inflation</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>{t.thChannel}</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>{t.thHolding}</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>{t.thBoughtIn}</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>{t.thIdleCash}</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>{t.thDeepestFall}</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>{t.thAfterInflation}</Table.ColumnHeaderCell>
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
                   {result.channels.map((c) => (
                     <Table.Row key={c.key}>
-                      <Table.RowHeaderCell>{c.label}</Table.RowHeaderCell>
-                      <Table.Cell>{c.unitsLabel}</Table.Cell>
-                      <Table.Cell>
-                        {c.monthsBought} / {result.months.length} months
-                      </Table.Cell>
-                      <Table.Cell>{money(c.idleCash)}</Table.Cell>
-                      <Table.Cell>{percent(c.maxDrawdown, 1)}</Table.Cell>
-                      <Table.Cell>{signedMoney(c.realProfit)}</Table.Cell>
+                      <Table.RowHeaderCell>{t[c.key]}</Table.RowHeaderCell>
+                      <Table.Cell>{holding(c.key, c.units)}</Table.Cell>
+                      <Table.Cell>{t.ofMonths(c.monthsBought, result.months.length)}</Table.Cell>
+                      <Table.Cell>{money(c.idleCash, lang)}</Table.Cell>
+                      <Table.Cell>{percent(c.maxDrawdown, 1, lang)}</Table.Cell>
+                      <Table.Cell>{signedMoney(c.realProfit, lang)}</Table.Cell>
                     </Table.Row>
                   ))}
                 </Table.Body>
               </Table.Root>
               <Text as="p" size="2" color="gray" mt="3">
-                Brokerage paid buying the ETF: {money(result.etfFees)}. Salary modelled from{" "}
-                {money(result.salaryStart)} a month at the start to {money(result.salaryEnd)} today.
+                {t.brokerage(money(result.etfFees, lang))}{" "}
+                {applied.mode === "percent"
+                  ? t.salaryModelled(
+                      money(result.salaryStart, lang),
+                      money(result.salaryEnd, lang),
+                    )
+                  : null}
               </Text>
             </Tabs.Content>
 
             <Tabs.Content value="months">
-              <Box style={{ maxHeight: "28rem", overflowY: "auto" }}>
+              <Box style={{ maxHeight: "28rem", overflow: "auto" }}>
                 <Table.Root variant="surface" size="1">
                   <Table.Header>
                     <Table.Row>
-                      <Table.ColumnHeaderCell>Month</Table.ColumnHeaderCell>
-                      <Table.ColumnHeaderCell>Put in</Table.ColumnHeaderCell>
-                      <Table.ColumnHeaderCell>Paid in so far</Table.ColumnHeaderCell>
-                      <Table.ColumnHeaderCell>Gold</Table.ColumnHeaderCell>
-                      <Table.ColumnHeaderCell>VN30 ETF</Table.ColumnHeaderCell>
-                      <Table.ColumnHeaderCell>Bank</Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell>{t.thMonth}</Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell>{t.thPutIn}</Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell>{t.thPaidInSoFar}</Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell>{t.thEtfPrice}</Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell>{t.thGoldPrice}</Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell>{t.gold}</Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell>{t.etf}</Table.ColumnHeaderCell>
+                      <Table.ColumnHeaderCell>{t.bank}</Table.ColumnHeaderCell>
                     </Table.Row>
                   </Table.Header>
                   <Table.Body>
                     {result.months.map((m) => (
                       <Table.Row key={m.month}>
                         <Table.RowHeaderCell>{m.month}</Table.RowHeaderCell>
-                        <Table.Cell>{money(m.contribution)}</Table.Cell>
-                        <Table.Cell>{money(m.paidIn)}</Table.Cell>
-                        <Table.Cell>{money(m.gold)}</Table.Cell>
-                        <Table.Cell>{money(m.etf)}</Table.Cell>
-                        <Table.Cell>{money(m.bank)}</Table.Cell>
+                        <Table.Cell>{money(m.contribution, lang)}</Table.Cell>
+                        <Table.Cell>{money(m.paidIn, lang)}</Table.Cell>
+                        <Table.Cell>{plain(m.etfPrice, lang)} ₫</Table.Cell>
+                        <Table.Cell>{money(m.goldPrice, lang)}</Table.Cell>
+                        <Table.Cell>{money(m.gold, lang)}</Table.Cell>
+                        <Table.Cell>{money(m.etf, lang)}</Table.Cell>
+                        <Table.Cell>{money(m.bank, lang)}</Table.Cell>
                       </Table.Row>
                     ))}
                   </Table.Body>
@@ -383,7 +469,7 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
             </Tabs.Content>
 
             <Tabs.Content value="sources">
-              <Sources snapshot={snapshot} />
+              <Sources snapshot={snapshot} copy={t} lang={lang} />
             </Tabs.Content>
           </Box>
         </Tabs.Root>

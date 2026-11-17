@@ -138,6 +138,38 @@ function monthsBetween(first, last) {
 
 const lastMonthOf = (byDate) => monthKey([...byDate.keys()].sort().at(-1));
 
+/**
+ * Structure is not enough. Both price feeds are third-party — one is a
+ * community scrape — and a silent swap of the buy/sell columns or a change of
+ * units would still parse cleanly while producing a flattered or absurd result.
+ * These are the checks that would have caught that.
+ */
+function checkPlausible(months) {
+  const fail = (m, why) => {
+    throw new Error(`${m.month} looks wrong: ${why}. Refusing to write the snapshot.`);
+  };
+
+  for (const m of months) {
+    // Gold shops always sell higher than they buy. If this flips, the model
+    // would turn the spread from a cost into a gain.
+    if (m.goldSell <= m.goldBuy) {
+      fail(m, `goldSell ${m.goldSell} is not above goldBuy ${m.goldBuy}`);
+    }
+    // Thousands of VND per lượng, and per fund unit.
+    if (m.goldSell < 20_000 || m.goldSell > 500_000) fail(m, `goldSell ${m.goldSell} out of range`);
+    if (m.etf < 5 || m.etf > 200) fail(m, `etf ${m.etf} out of range`);
+  }
+
+  for (let i = 1; i < months.length; i++) {
+    for (const key of ["etf", "goldBuy", "goldSell"]) {
+      const move = Math.abs(months[i][key] / months[i - 1][key] - 1);
+      if (move > 0.5) {
+        fail(months[i], `${key} moved ${(move * 100).toFixed(0)}% from ${months[i - 1].month}`);
+      }
+    }
+  }
+}
+
 async function main() {
   const [etf, gold] = await Promise.all([fetchEtf(), fetchGold()]);
 
@@ -165,6 +197,8 @@ async function main() {
     throw new Error(`no price for ${missing.length} month(s): ${missing.join(", ")}`);
   }
   if (months.length < 24) throw new Error(`only ${months.length} months resolved; refusing to write`);
+
+  checkPlausible(months);
 
   const cpi = await fetchCpi(Number(lastMonth.slice(0, 4)));
 

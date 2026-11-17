@@ -34,13 +34,14 @@ export interface Snapshot {
 }
 
 export interface Inputs {
-  startYear: number;
+  /** Inclusive first month of the plan, "YYYY-MM". */
+  startMonth: string;
   mode: SavingMode;
-  /** Monthly salary today, in VND. The starting salary is derived from it. */
-  salaryToday: number;
+  /** Monthly salary in the first month of the plan, in VND. */
+  salaryStart: number;
   raisePct: number;
-  /** The salary stops growing once it is this much above where it started. */
-  ceilingPct: number;
+  /** The salary never rises above this, in VND. */
+  salaryCeiling: number;
   savePct: number;
   /** Used instead of a share of salary when `mode` is "fixed". */
   fixedAmount: number;
@@ -49,6 +50,10 @@ export interface Inputs {
 
 export interface MonthPoint {
   month: string;
+  /** What one fund unit cost that month, in VND. */
+  etfPrice: number;
+  /** What one lượng of gold cost to buy that month, in VND. */
+  goldPrice: number;
   contribution: number;
   /** Cumulative money put in, up to and including this month. */
   paidIn: number;
@@ -59,7 +64,6 @@ export interface MonthPoint {
 
 export interface ChannelResult {
   key: ChannelKey;
-  label: string;
   value: number;
   profit: number;
   profitPct: number;
@@ -70,7 +74,9 @@ export interface ChannelResult {
   /** Deepest fall from a running peak, as a negative fraction. */
   maxDrawdown: number;
   idleCash: number;
-  unitsLabel: string;
+  /** Chi of gold, or fund units. Zero for the bank. Formatted by the UI, which
+   *  knows the reader's language. */
+  units: number;
   monthsBought: number;
 }
 

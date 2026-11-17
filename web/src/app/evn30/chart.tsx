@@ -3,31 +3,49 @@
 import { Box, Flex, Text } from "@radix-ui/themes";
 import { useMemo, useState } from "react";
 
-import { money } from "@/lib/evn30/format";
-import type { MonthPoint } from "@/lib/evn30/types";
+import type { Copy, Lang } from "@/lib/evn30/copy";
+import { money, monthName } from "@/lib/evn30/format";
+import type { ChannelKey, MonthPoint } from "@/lib/evn30/types";
 
 const W = 820;
 const H = 300;
-const PAD = { left: 58, right: 10, top: 12, bottom: 26 };
+const PAD = { left: 62, right: 10, top: 12, bottom: 26 };
 const PLOT_W = W - PAD.left - PAD.right;
 const PLOT_H = H - PAD.top - PAD.bottom;
 
-export const SERIES = [
-  { key: "gold", label: "SJC gold", color: "var(--amber-9)", width: 2.2 },
-  { key: "etf", label: "VN30 ETF", color: "var(--indigo-9)", width: 2 },
-  { key: "bank", label: "Bank savings", color: "var(--gray-8)", width: 1.8 },
-] as const;
+export const SERIES: Array<{ key: ChannelKey; color: string; width: number }> = [
+  { key: "gold", color: "var(--amber-9)", width: 2.2 },
+  { key: "etf", color: "var(--indigo-9)", width: 2 },
+  { key: "bank", color: "var(--gray-8)", width: 1.8 },
+];
 
 const PAID_COLOR = "var(--gray-11)";
 
-/** Axis labels need to be short: 2_004_000_000 → "2.0B". */
-function axisTick(vnd: number): string {
+/** Axis labels need to be short: 2_004_000_000 → "2.0B" / "2,0 tỷ". */
+function axisTick(vnd: number, lang: Lang): string {
   if (vnd === 0) return "0";
-  if (vnd >= 1_000_000_000) return `${(vnd / 1_000_000_000).toFixed(1)}B`;
-  return `${Math.round(vnd / 1_000_000)}M`;
+  const n = (v: number, dp: number) =>
+    v.toLocaleString(lang === "vi" ? "vi-VN" : "en-US", {
+      minimumFractionDigits: dp,
+      maximumFractionDigits: dp,
+    });
+  if (vnd >= 1_000_000_000) {
+    return lang === "vi" ? `${n(vnd / 1e9, 1)} tỷ` : `${n(vnd / 1e9, 1)}B`;
+  }
+  return lang === "vi" ? `${n(vnd / 1e6, 0)} tr` : `${n(vnd / 1e6, 0)}M`;
 }
 
-export function Chart({ months }: { months: MonthPoint[] }) {
+export function Chart({
+  months,
+  copy,
+  lang,
+  latestDate,
+}: {
+  months: MonthPoint[];
+  copy: Copy;
+  lang: Lang;
+  latestDate: string;
+}) {
   const [hover, setHover] = useState<number | null>(null);
 
   const max = useMemo(
@@ -42,7 +60,6 @@ export function Chart({ months }: { months: MonthPoint[] }) {
   const path = (pick: (m: MonthPoint) => number) =>
     months.map((m, i) => `${x(i).toFixed(1)},${y(pick(m)).toFixed(1)}`).join(" ");
 
-  // A tick every other year, taken from the January rows.
   const yearTicks = months
     .map((m, i) => ({ i, year: Number(m.month.slice(0, 4)), isJan: m.month.endsWith("-01") }))
     .filter((t) => t.isJan && t.year % 2 === 0);
@@ -52,33 +69,27 @@ export function Chart({ months }: { months: MonthPoint[] }) {
   return (
     <Box>
       <Flex gap="4" wrap="wrap" mb="2" align="baseline">
-        <Text size="1" color="gray" style={{ minWidth: "5.5rem" }}>
-          {hover === null ? "Today" : shown.month}
+        <Text size="1" color="gray" style={{ minWidth: "7rem" }}>
+          {hover === null ? latestDate : monthName(shown.month, lang)}
         </Text>
         {SERIES.map((s) => (
           <Flex key={s.key} align="center" gap="1">
-            <Box
-              style={{ width: 9, height: 9, borderRadius: 2, background: s.color }}
-              aria-hidden
-            />
+            <Box style={{ width: 9, height: 9, borderRadius: 2, background: s.color }} aria-hidden />
             <Text size="1" color="gray">
-              {s.label}
+              {copy[s.key]}
             </Text>
             <Text size="1" weight="medium">
-              {money(shown[s.key])}
+              {money(shown[s.key], lang)}
             </Text>
           </Flex>
         ))}
         <Flex align="center" gap="1">
-          <Box
-            style={{ width: 9, height: 2, background: PAID_COLOR, borderRadius: 2 }}
-            aria-hidden
-          />
+          <Box style={{ width: 9, height: 2, background: PAID_COLOR, borderRadius: 2 }} aria-hidden />
           <Text size="1" color="gray">
-            Paid in
+            {copy.paidInShort}
           </Text>
           <Text size="1" weight="medium">
-            {money(shown.paidIn)}
+            {money(shown.paidIn, lang)}
           </Text>
         </Flex>
       </Flex>
@@ -87,7 +98,7 @@ export function Chart({ months }: { months: MonthPoint[] }) {
         viewBox={`0 0 ${W} ${H}`}
         style={{ width: "100%", height: "auto", display: "block", touchAction: "pan-y" }}
         role="img"
-        aria-label={`Value of each channel from ${months[0].month} to ${months[months.length - 1].month}`}
+        aria-label={`${copy.gold}, ${copy.etf}, ${copy.bank}: ${monthName(months[0].month, lang)} → ${monthName(months[months.length - 1].month, lang)}`}
         onMouseLeave={() => setHover(null)}
         onMouseMove={(e) => {
           const box = e.currentTarget.getBoundingClientRect();
@@ -114,7 +125,7 @@ export function Chart({ months }: { months: MonthPoint[] }) {
               fontSize="10.5"
               fill="var(--gray-10)"
             >
-              {axisTick(max * f)}
+              {axisTick(max * f, lang)}
             </text>
           </g>
         ))}

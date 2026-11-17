@@ -15,23 +15,15 @@ export const ETF_FEE = 0.0015;
 export const CHI_PER_TAEL = 10;
 
 export const DEFAULT_INPUTS: Inputs = {
-  startYear: 2016,
+  startMonth: "2016-01",
   mode: "percent",
-  salaryToday: 30_000_000,
+  salaryStart: 18_750_000,
   raisePct: 8,
-  ceilingPct: 60,
+  salaryCeiling: 30_000_000,
   savePct: 25,
   fixedAmount: 2_000_000,
   monthlyCapVnd: 50_000_000,
 };
-
-const LABELS: Record<ChannelKey, string> = {
-  gold: "SJC gold",
-  etf: "VN30 ETF",
-  bank: "Bank savings",
-};
-
-const unitFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 
 /**
  * Annual tables stop at the last year anyone published. Carry the nearest
@@ -81,15 +73,16 @@ function deepestFall(values: number[]): number {
 const dayNumber = (isoDate: string) => Date.parse(`${isoDate}T00:00:00Z`) / 86_400_000;
 
 export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
-  const rows = snapshot.months.filter((m) => Number(m.month.slice(0, 4)) >= inputs.startYear);
+  // "YYYY-MM" strings compare correctly, so no date parsing is needed here.
+  const rows = snapshot.months.filter((m) => m.month >= inputs.startMonth);
 
   const empty: SimulationResult = {
     months: [],
     paidIn: 0,
     paidInToday: 0,
     inflationFactor: 1,
-    salaryStart: inputs.salaryToday,
-    salaryEnd: inputs.salaryToday,
+    salaryStart: inputs.salaryStart,
+    salaryEnd: inputs.salaryStart,
     ceilingYear: null,
     firstContribution: 0,
     lastContribution: 0,
@@ -99,10 +92,12 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
   if (!rows.length) return empty;
 
   const raiseFactor = 1 + inputs.raisePct / 100;
-  const ceilingFactor = 1 + inputs.ceilingPct / 100;
   const lastYearIndex = Math.floor((rows.length - 1) / 12);
-  const growthAtEnd = Math.min(raiseFactor ** lastYearIndex, ceilingFactor);
-  const salaryStart = inputs.salaryToday / (growthAtEnd || 1);
+  // The salary is stated outright now, so nothing is back-solved: it simply
+  // grows each year until it meets the ceiling and then stops.
+  const salaryStart = inputs.salaryStart;
+  const salaryAt = (yearIndex: number) =>
+    Math.min(salaryStart * raiseFactor ** yearIndex, inputs.salaryCeiling);
 
   let etfCash = 0;
   let etfUnits = 0;
@@ -122,7 +117,7 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
   rows.forEach((row, i) => {
     const year = Number(row.month.slice(0, 4));
     const yearIndex = Math.floor(i / 12);
-    const salary = salaryStart * Math.min(raiseFactor ** yearIndex, ceilingFactor);
+    const salary = salaryAt(yearIndex);
 
     const contribution =
       inputs.mode === "fixed"
@@ -132,7 +127,7 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
     if (
       inputs.mode === "percent" &&
       ceilingYear === null &&
-      raiseFactor ** yearIndex >= ceilingFactor
+      salaryStart * raiseFactor ** yearIndex >= inputs.salaryCeiling
     ) {
       ceilingYear = year;
     }
@@ -154,8 +149,11 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
       etfMonths += 1;
     }
 
-    // Bank — compounds on what was already there, then this month goes in.
-    bank = bank * (1 + rateFor(snapshot.deposit, year) / 100 / 12) + contribution;
+    // Bank — compounds on what was already there, then this month goes in. The
+    // table quotes 12-month rates, which are effective: a deposit advertised at
+    // 6.5% pays 6.5% over the year, so the monthly factor is the twelfth root,
+    // not r/12 (which would quietly pay 6.70%).
+    bank = bank * (1 + rateFor(snapshot.deposit, year) / 100) ** (1 / 12) + contribution;
 
     // Gold — bought at the shop's selling price, in whole chỉ.
     goldCash += contribution;
@@ -169,6 +167,8 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
 
     months.push({
       month: row.month,
+      etfPrice: row.etf * 1000,
+      goldPrice: row.goldSell * 1000,
       contribution,
       paidIn,
       gold: (goldChi * row.goldBuy * 1000) / CHI_PER_TAEL + goldCash,
@@ -201,21 +201,14 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
   lastPoint.gold = finals.gold;
   lastPoint.etf = finals.etf;
   lastPoint.bank = finals.bank;
+  lastPoint.etfPrice = latest.etf * 1000;
+  lastPoint.goldPrice = latest.goldSell * 1000;
 
-  const extras: Record<ChannelKey, { idleCash: number; unitsLabel: string; monthsBought: number }> =
-    {
-      gold: {
-        idleCash: goldCash,
-        unitsLabel: `${(goldChi / CHI_PER_TAEL).toFixed(1)} lượng`,
-        monthsBought: goldMonths,
-      },
-      etf: {
-        idleCash: etfCash,
-        unitsLabel: `${unitFormat.format(etfUnits)} units`,
-        monthsBought: etfMonths,
-      },
-      bank: { idleCash: 0, unitsLabel: "compounds monthly", monthsBought: bankMonths },
-    };
+  const extras: Record<ChannelKey, { idleCash: number; units: number; monthsBought: number }> = {
+    gold: { idleCash: goldCash, units: goldChi, monthsBought: goldMonths },
+    etf: { idleCash: etfCash, units: etfUnits, monthsBought: etfMonths },
+    bank: { idleCash: 0, units: 0, monthsBought: bankMonths },
+  };
 
   const seriesFor: Record<ChannelKey, number[]> = {
     gold: months.map((m) => m.gold),
@@ -228,7 +221,6 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
     const profit = value - paidIn;
     return {
       key,
-      label: LABELS[key],
       value,
       profit,
       profitPct: paidIn > 0 ? profit / paidIn : 0,
@@ -247,7 +239,7 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
     paidInToday,
     inflationFactor: cpiStart > 0 ? cpiEnd / cpiStart : 1,
     salaryStart,
-    salaryEnd: salaryStart * growthAtEnd,
+    salaryEnd: salaryAt(lastYearIndex),
     ceilingYear,
     firstContribution: months[0].contribution,
     lastContribution: months[months.length - 1].contribution,

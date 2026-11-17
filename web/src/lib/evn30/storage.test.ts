@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { DEFAULT_INPUTS } from "./simulate";
-import { loadInputs, parseInputs, saveInputs, STORAGE_KEY } from "./storage";
+import { loadInputs, parseInputs, parseLang, saveInputs, STORAGE_KEY } from "./storage";
 import type { Inputs } from "./types";
 
 /** Minimal stand-in; the node test environment has no localStorage. */
@@ -40,11 +40,11 @@ describe("parseInputs", () => {
 
   test("replaces values of the wrong type with the default", () => {
     const got = parseInputs(
-      JSON.stringify({ savePct: "forty", raisePct: null, salaryToday: "30000000" }),
+      JSON.stringify({ savePct: "forty", raisePct: null, salaryStart: "30000000" }),
     );
     expect(got?.savePct).toBe(DEFAULT_INPUTS.savePct);
     expect(got?.raisePct).toBe(DEFAULT_INPUTS.raisePct);
-    expect(got?.salaryToday).toBe(DEFAULT_INPUTS.salaryToday);
+    expect(got?.salaryStart).toBe(DEFAULT_INPUTS.salaryStart);
   });
 
   test("replaces NaN and Infinity with the default", () => {
@@ -60,28 +60,27 @@ describe("parseInputs", () => {
       JSON.stringify({
         savePct: 250,
         raisePct: -5,
-        ceilingPct: 9999,
+        salaryCeiling: 99_999_999_999,
         monthlyCapVnd: 1,
-        salaryToday: -100,
+        salaryStart: -100,
         fixedAmount: -1,
       }),
     )!;
     expect(got.savePct).toBe(100);
     expect(got.raisePct).toBe(0);
-    expect(got.ceilingPct).toBe(200);
+    expect(got.salaryCeiling).toBe(10_000_000_000);
     expect(got.monthlyCapVnd).toBe(1_000_000);
-    expect(got.salaryToday).toBe(0);
+    expect(got.salaryStart).toBe(0);
     expect(got.fixedAmount).toBe(0);
   });
 
-  test("only accepts a start year the page offers", () => {
-    expect(parseInputs(JSON.stringify({ startYear: 2020 }))!.startYear).toBe(2020);
-    expect(parseInputs(JSON.stringify({ startYear: 1999 }))!.startYear).toBe(
-      DEFAULT_INPUTS.startYear,
-    );
-    expect(parseInputs(JSON.stringify({ startYear: 2017 }))!.startYear).toBe(
-      DEFAULT_INPUTS.startYear,
-    );
+  test("only accepts a well-formed start month", () => {
+    expect(parseInputs(JSON.stringify({ startMonth: "2020-07" }))!.startMonth).toBe("2020-07");
+    for (const bad of ["2020-13", "2020-00", "2020-7", "July 2020", "2020", 202007]) {
+      expect(parseInputs(JSON.stringify({ startMonth: bad }))!.startMonth).toBe(
+        DEFAULT_INPUTS.startMonth,
+      );
+    }
   });
 
   test("only accepts a known saving mode", () => {
@@ -122,5 +121,16 @@ describe("loadInputs / saveInputs", () => {
     vi.stubGlobal("window", undefined);
     expect(loadInputs()).toEqual(DEFAULT_INPUTS);
     expect(() => saveInputs(DEFAULT_INPUTS)).not.toThrow();
+  });
+});
+
+describe("parseLang", () => {
+  test("accepts the two languages the page has", () => {
+    expect(parseLang("vi")).toBe("vi");
+    expect(parseLang("en")).toBe("en");
+  });
+
+  test("falls back to English for anything else", () => {
+    for (const bad of [null, "", "fr", "VI", "vi-VN", "{}"]) expect(parseLang(bad)).toBe("en");
   });
 });

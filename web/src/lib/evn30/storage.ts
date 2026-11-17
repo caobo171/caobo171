@@ -1,17 +1,17 @@
+import type { Lang } from "./copy";
 import { DEFAULT_INPUTS } from "./simulate";
 import type { Inputs, SavingMode } from "./types";
 
 /** Versioned, so a later change to Inputs cannot resurrect an incompatible shape. */
-export const STORAGE_KEY = "evn30:inputs:v1";
+export const STORAGE_KEY = "evn30:inputs:v3";
 
-const START_YEARS = [2016, 2018, 2020, 2022, 2024];
 const MODES: SavingMode[] = ["percent", "fixed"];
 
 /** Matches the ranges the controls allow, so a stored value cannot exceed them. */
 const BOUNDS = {
-  salaryToday: [0, 10_000_000_000],
+  salaryStart: [0, 10_000_000_000],
   raisePct: [0, 20],
-  ceilingPct: [0, 200],
+  salaryCeiling: [0, 10_000_000_000],
   savePct: [0, 100],
   fixedAmount: [0, 10_000_000_000],
   monthlyCapVnd: [1_000_000, 100_000_000],
@@ -42,14 +42,14 @@ export function parseInputs(raw: string | null): Inputs | null {
 
   const o = parsed as Record<string, unknown>;
   return {
-    startYear:
-      typeof o.startYear === "number" && START_YEARS.includes(o.startYear)
-        ? o.startYear
-        : DEFAULT_INPUTS.startYear,
+    startMonth:
+      typeof o.startMonth === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(o.startMonth)
+        ? o.startMonth
+        : DEFAULT_INPUTS.startMonth,
     mode: MODES.includes(o.mode as SavingMode) ? (o.mode as SavingMode) : DEFAULT_INPUTS.mode,
-    salaryToday: num(o.salaryToday, "salaryToday"),
+    salaryStart: num(o.salaryStart, "salaryStart"),
     raisePct: num(o.raisePct, "raisePct"),
-    ceilingPct: num(o.ceilingPct, "ceilingPct"),
+    salaryCeiling: num(o.salaryCeiling, "salaryCeiling"),
     savePct: num(o.savePct, "savePct"),
     fixedAmount: num(o.fixedAmount, "fixedAmount"),
     monthlyCapVnd: num(o.monthlyCapVnd, "monthlyCapVnd"),
@@ -99,5 +99,39 @@ export function saveInputs(inputs: Inputs): void {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(inputs));
   } catch {
     /* private mode, quota, or no window — not worth bothering the reader about */
+  }
+}
+
+/** The reader's language is remembered separately from the scenario. */
+export const LANG_KEY = "evn30:lang:v1";
+
+export function parseLang(raw: string | null): Lang {
+  return raw === "vi" || raw === "en" ? raw : "en";
+}
+
+/**
+ * The stored choice if there is one, otherwise a guess from the browser —
+ * a Vietnamese reader should not have to ask for a Vietnamese page.
+ */
+export function readStoredLangRaw(): string | null {
+  try {
+    const stored = window.localStorage.getItem(LANG_KEY);
+    if (stored) return stored;
+    return window.navigator.language?.toLowerCase().startsWith("vi") ? "vi" : "en";
+  } catch {
+    return null;
+  }
+}
+
+/** Prerender has no browser to ask, so the server always says English. */
+export function readServerLangRaw(): null {
+  return null;
+}
+
+export function saveLang(lang: Lang): void {
+  try {
+    window.localStorage.setItem(LANG_KEY, lang);
+  } catch {
+    /* nothing worth telling the reader */
   }
 }
