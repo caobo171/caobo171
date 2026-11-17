@@ -26,6 +26,7 @@ export interface Copy {
   modeFixed: string;
   salaryStart: string;
   salaryToday: string;
+  cappedFrom: (year: number) => string;
   savePct: string;
   savePctValue: (pct: number) => string;
   raiseEachYear: string;
@@ -121,6 +122,7 @@ const EN: Copy = {
   modeFixed: "a fixed amount",
   salaryStart: "Salary when I started",
   salaryToday: "which is today",
+  cappedFrom: (y) => `held at the ceiling from ${y}`,
   savePct: "I save",
   savePctValue: (p) => `${p}% of it`,
   raiseEachYear: "Raise each year",
@@ -258,6 +260,7 @@ const VI: Copy = {
   modeFixed: "số tiền cố định",
   salaryStart: "Lương lúc bắt đầu",
   salaryToday: "tức là hiện nay",
+  cappedFrom: (y) => `chạm trần từ ${y}`,
   savePct: "Tôi để dành",
   savePctValue: (p) => `${p}% lương`,
   raiseEachYear: "Tăng lương mỗi năm",

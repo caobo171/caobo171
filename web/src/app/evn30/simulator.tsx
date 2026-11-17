@@ -44,8 +44,14 @@ import type { ChannelKey, Inputs, Snapshot } from "@/lib/evn30/types";
 import { Chart } from "./chart";
 import { Sources } from "./sources";
 
-/** A plan shorter than this annualises into nonsense, so the slider stops there. */
-const MIN_MONTHS = 12;
+/** How long a run to open up when the reader moves the start past the end. */
+const DEFAULT_RUN_MONTHS = 12;
+
+const addMonths = (month: string, n: number): string => {
+  const [y, m] = month.split("-").map(Number);
+  const total = y * 12 + (m - 1) + n;
+  return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, "0")}`;
+};
 
 const DOT: Record<ChannelKey, string> = {
   gold: "var(--amber-9)",
@@ -215,16 +221,15 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
   const percentMode = draft.mode === "percent";
   const winner = result.channels[0];
 
-  // Start options come from the data; end options run years past it, because a
-  // reader may want to carry the plan forward.
-  const startable = snapshot.months.slice(0, Math.max(1, snapshot.months.length - MIN_MONTHS + 1));
-  const firstMonth = startable[0].month;
-  const lastStartable = startable[startable.length - 1].month;
+  // Both ends range over the data and twenty years past it. Starting in the
+  // future is a fair question — "what if I begin next year?" — and the run is
+  // then projected throughout.
+  const firstMonth = snapshot.months[0].month;
   const lastRealMonth = snapshot.months[snapshot.months.length - 1].month;
-  const startYears = [...new Set(startable.map((m) => Number(m.month.slice(0, 4))))];
   const lastRealYear = Number(lastRealMonth.slice(0, 4));
-  const endYears = [...new Set(snapshot.months.map((m) => Number(m.month.slice(0, 4))))];
-  for (let y = lastRealYear + 1; y <= lastRealYear + 20; y++) endYears.push(y);
+  const years = [...new Set(snapshot.months.map((m) => Number(m.month.slice(0, 4))))];
+  for (let y = lastRealYear + 1; y <= lastRealYear + 20; y++) years.push(y);
+  const horizon = `${years[years.length - 1]}-12`;
 
   // A projected run is not "priced" on any real date — it ends on an assumed one.
   const priced = result.projectedFrom
@@ -300,10 +305,19 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
             >
               <MonthYearPicker
                 value={draft.startMonth}
-                years={startYears}
+                years={years}
                 min={firstMonth}
-                max={lastStartable}
-                onChange={(m) => set("startMonth", m)}
+                max={horizon}
+                onChange={(m) => {
+                  // Moving the start past the end would leave an empty run, so
+                  // carry the end along rather than showing a blank page.
+                  const end = draft.endMonth || lastRealMonth;
+                  setDraftEdit({
+                    ...draft,
+                    startMonth: m,
+                    endMonth: m >= end ? addMonths(m, DEFAULT_RUN_MONTHS) : draft.endMonth,
+                  });
+                }}
                 t={t}
               />
             </Field>
@@ -318,9 +332,9 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
             >
               <MonthYearPicker
                 value={draft.endMonth || lastRealMonth}
-                years={endYears}
-                min={draft.startMonth}
-                max={`${endYears[endYears.length - 1]}-12`}
+                years={years}
+                min={addMonths(draft.startMonth, 1)}
+                max={horizon}
                 onChange={(m) => set("endMonth", m === lastRealMonth ? "" : m)}
                 t={t}
               />
@@ -380,7 +394,12 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
 
                 <Field
                   label={t.raiseEachYear}
-                  value={`${percent(draft.raisePct / 100, 0, lang)} · ${money(preview.salaryEnd, lang)} ${t.salaryToday}`}
+                  value={
+                    `${percent(draft.raisePct / 100, 0, lang)} · ${money(preview.salaryEnd, lang)} ${t.salaryToday}` +
+                    // Without this the slider looks broken: past the ceiling the
+                    // final salary stops moving however hard you drag.
+                    (preview.ceilingYear ? ` — ${t.cappedFrom(preview.ceilingYear)}` : "")
+                  }
                 >
                   <A11ySlider
                     size="1"

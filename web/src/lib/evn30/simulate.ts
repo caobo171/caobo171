@@ -97,6 +97,13 @@ function logLinearMonthlyGrowth(values: number[]): number {
   return Math.exp(num / den);
 }
 
+/** Whole months from `a` to `b`; negative when b precedes a. */
+const monthDiff = (a: string, b: string): number => {
+  const [ay, am] = a.split("-").map(Number);
+  const [by, bm] = b.split("-").map(Number);
+  return (by - ay) * 12 + (bm - am);
+};
+
 const nextMonth = (month: string): string => {
   let [y, m] = month.split("-").map(Number);
   if (++m === 13) {
@@ -119,7 +126,7 @@ function buildRows(snapshot: Snapshot, startMonth: string, endMonth: string): Ro
     .map((m) => ({ ...m, projected: false }));
 
   const lastReal = snapshot.months[snapshot.months.length - 1];
-  if (!endMonth || endMonth <= lastReal.month || !history.length) return history;
+  if (!endMonth || endMonth <= lastReal.month) return history;
 
   // Fit on the WHOLE history, never the chosen window. A reader looking at the
   // last two years would otherwise have a bull run extrapolated for a decade —
@@ -128,10 +135,12 @@ function buildRows(snapshot: Snapshot, startMonth: string, endMonth: string): Ro
   const goldGrowth = logLinearMonthlyGrowth(snapshot.months.map((m) => m.goldBuy));
   const spread = lastReal.goldSell / lastReal.goldBuy;
 
+  // A start past the data is legitimate — "what if I begin next year?" — so the
+  // synthesis starts wherever the plan does, not merely where the data stops.
   const rows = [...history];
-  let month = nextMonth(lastReal.month);
-  let step = 1;
+  let month = startMonth > lastReal.month ? startMonth : nextMonth(lastReal.month);
   while (month <= endMonth) {
+    const step = monthDiff(lastReal.month, month);
     const goldBuy = lastReal.goldBuy * goldGrowth ** step;
     rows.push({
       month,
@@ -142,7 +151,6 @@ function buildRows(snapshot: Snapshot, startMonth: string, endMonth: string): Ro
       projected: true,
     });
     month = nextMonth(month);
-    step += 1;
   }
   return rows;
 }

@@ -146,6 +146,28 @@ describe("simulate", () => {
     expect(long.assumedAnnual!.etf).toBeLessThan(0.18);
   });
 
+  test("can start in the future, giving a run that is projected throughout", () => {
+    const r = simulate(snapshot, {
+      ...DEFAULT_INPUTS,
+      startMonth: "2028-01",
+      endMonth: "2032-12",
+    });
+
+    expect(r.months).toHaveLength(60);
+    expect(r.months[0].month).toBe("2028-01");
+    expect(r.months.every((m) => m.projected)).toBe(true);
+    expect(r.projectedFrom).toBe("2028-01");
+    expect(r.paidIn).toBeGreaterThan(0);
+    for (const c of r.channels) expect(Number.isFinite(c.value)).toBe(true);
+  });
+
+  test("prices keep compounding across the gap to a future start", () => {
+    const soon = simulate(snapshot, { ...DEFAULT_INPUTS, startMonth: "2027-01", endMonth: "2027-12" });
+    const later = simulate(snapshot, { ...DEFAULT_INPUTS, startMonth: "2032-01", endMonth: "2032-12" });
+    // A start five years further out meets prices five years further along.
+    expect(later.months[0].etfPrice).toBeGreaterThan(soon.months[0].etfPrice);
+  });
+
   test("orders channels by return, best first", () => {
     const r = simulate(snapshot, DEFAULT_INPUTS);
     expect(r.channels.map((c) => c.key)).toEqual(["gold", "etf", "bank"]);
