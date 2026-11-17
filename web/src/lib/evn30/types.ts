@@ -33,6 +33,25 @@ export interface Snapshot {
   sources: Record<string, string>;
 }
 
+/**
+ * A life event the plan has to pay for: a house, a car, a child. `upfront` and
+ * `annual` are both stated in TODAY's money — the reader thinks in prices they
+ * know — and the engine inflates them to the year the cost actually falls.
+ */
+export interface Milestone {
+  /** Stable across edits, so React rows and the engine agree on identity. */
+  id: string;
+  name: string;
+  /** Calendar year the cost starts. */
+  year: number;
+  /** Paid once, at the start of `year`. */
+  upfront: number;
+  /** Paid every year from `year` onward — loan interest, school fees, upkeep. */
+  annual: number;
+  /** How many years `annual` runs. Zero means until the plan ends. */
+  years: number;
+}
+
 export interface Inputs {
   /** Inclusive first month of the plan, "YYYY-MM". */
   startMonth: string;
@@ -53,6 +72,8 @@ export interface Inputs {
   monthlyCapVnd: number;
   /** Spending to test the result against, per month, in today's money. */
   monthlySpend: number;
+  /** Life events the plan has to pay for. Empty means a plan with no shocks. */
+  milestones: Milestone[];
 }
 
 export interface MonthPoint {
@@ -64,6 +85,8 @@ export interface MonthPoint {
   /** What one lượng of gold cost to buy that month, in VND. */
   goldPrice: number;
   contribution: number;
+  /** What the milestones took this month, in that month's dong. */
+  milestoneCost: number;
   /** Cumulative money put in, up to and including this month. */
   paidIn: number;
   gold: number;
@@ -85,6 +108,13 @@ export interface ChannelResult {
   realProfit: number;
   /** Deepest fall from a running peak, as a negative fraction. */
   maxDrawdown: number;
+  /** Milestone money this channel actually funded, out of contributions and,
+   *  when those ran out, out of the pot itself. */
+  spent: number;
+  /** Milestone money it could not fund at all. */
+  unpaid: number;
+  /** First month the pot could not cover what was asked of it, or null. */
+  brokeMonth: string | null;
   idleCash: number;
   /** Chi of gold, or fund units. Zero for the bank. Formatted by the UI, which
    *  knows the reader's language. */
@@ -111,6 +141,10 @@ export interface SimulationResult {
   assumedAnnual: Record<ChannelKey, number> | null;
   /** The span the growth rates were fitted over — always the whole history. */
   fittedOver: { from: string; to: string } | null;
+  /** What the milestones cost over the run, in the dong of each year. */
+  milestoneTotal: number;
+  /** The same cost restated in today's money. */
+  milestoneTotalToday: number;
   /** Best return first. */
   channels: ChannelResult[];
 }

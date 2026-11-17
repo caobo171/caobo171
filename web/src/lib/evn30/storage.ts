@@ -1,9 +1,9 @@
 import type { Lang } from "./copy";
 import { DEFAULT_INPUTS } from "./simulate";
-import type { Inputs, SavingMode } from "./types";
+import type { Inputs, Milestone, SavingMode } from "./types";
 
 /** Versioned, so a later change to Inputs cannot resurrect an incompatible shape. */
-export const STORAGE_KEY = "evn30:inputs:v5";
+export const STORAGE_KEY = "evn30:inputs:v6";
 
 const MODES: SavingMode[] = ["percent", "fixed"];
 
@@ -18,6 +18,55 @@ const BOUNDS = {
   monthlyCapVnd: [1_000_000, 100_000_000],
   monthlySpend: [0, 10_000_000_000],
 } as const;
+
+/** More than this and the controls stop being usable long before the engine does. */
+export const MAX_MILESTONES = 12;
+const NAME_MAX = 60;
+
+const MILESTONE_BOUNDS = {
+  year: [1900, 2200],
+  upfront: [0, 100_000_000_000],
+  annual: [0, 100_000_000_000],
+  years: [0, 100],
+} as const;
+
+function milestoneNum(raw: unknown, key: keyof typeof MILESTONE_BOUNDS): number {
+  const [lo, hi] = MILESTONE_BOUNDS[key];
+  if (typeof raw !== "number" || !Number.isFinite(raw)) return lo;
+  return Math.min(hi, Math.max(lo, Math.round(raw)));
+}
+
+/**
+ * Milestones arrive as whatever was last written to localStorage, so the list
+ * is rebuilt entry by entry: bad entries are dropped, bad fields are clamped,
+ * and every survivor gets a unique id — the engine charges each down payment
+ * once, keyed by id, so two milestones sharing one would silently lose a cost.
+ */
+function parseMilestones(raw: unknown): Milestone[] {
+  if (!Array.isArray(raw)) return [];
+  const out: Milestone[] = [];
+  const seen = new Set<string>();
+
+  for (const entry of raw.slice(0, MAX_MILESTONES)) {
+    if (typeof entry !== "object" || entry === null || Array.isArray(entry)) continue;
+    const o = entry as Record<string, unknown>;
+
+    let id =
+      typeof o.id === "string" && o.id.trim() ? o.id.trim().slice(0, 40) : `auto-${out.length}`;
+    while (seen.has(id)) id = `${id}-${out.length}`;
+    seen.add(id);
+
+    out.push({
+      id,
+      name: typeof o.name === "string" ? o.name.trim().slice(0, NAME_MAX) : "",
+      year: milestoneNum(o.year, "year"),
+      upfront: milestoneNum(o.upfront, "upfront"),
+      annual: milestoneNum(o.annual, "annual"),
+      years: milestoneNum(o.years, "years"),
+    });
+  }
+  return out;
+}
 
 function num(raw: unknown, key: keyof typeof BOUNDS): number {
   if (typeof raw !== "number" || !Number.isFinite(raw)) return DEFAULT_INPUTS[key];
@@ -63,6 +112,7 @@ export function parseInputs(raw: string | null): Inputs | null {
     fixedAmount: num(o.fixedAmount, "fixedAmount"),
     monthlyCapVnd: num(o.monthlyCapVnd, "monthlyCapVnd"),
     monthlySpend: num(o.monthlySpend, "monthlySpend"),
+    milestones: parseMilestones(o.milestones),
   };
 }
 

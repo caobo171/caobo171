@@ -36,10 +36,11 @@ import {
   readStoredLangRaw,
   readStoredRaw,
   saveInputs,
+  MAX_MILESTONES,
   saveLang,
   subscribeToStored,
 } from "@/lib/evn30/storage";
-import type { ChannelKey, Inputs, Snapshot } from "@/lib/evn30/types";
+import type { ChannelKey, Inputs, Milestone, Snapshot } from "@/lib/evn30/types";
 
 import { Chart } from "./chart";
 import { Sources } from "./sources";
@@ -209,6 +210,123 @@ function Stat({
   );
 }
 
+/** Starting points, so the first milestone is one click rather than five fields. */
+const PRESETS: Array<{
+  label: "presetHouse" | "presetCar" | "presetChild";
+  upfront: number;
+  annual: number;
+  years: number;
+}> = [
+  { label: "presetHouse", upfront: 800_000_000, annual: 120_000_000, years: 20 },
+  { label: "presetCar", upfront: 300_000_000, annual: 40_000_000, years: 10 },
+  { label: "presetChild", upfront: 50_000_000, annual: 60_000_000, years: 22 },
+];
+
+/**
+ * One milestone's fields. Laid out with wrapping flex rather than a column
+ * grid: the row has to survive a phone without a breakpoint deciding which
+ * field gets squeezed.
+ */
+function MilestoneRow({
+  m,
+  t,
+  lang,
+  years,
+  outside,
+  onChange,
+  onRemove,
+}: {
+  m: Milestone;
+  t: Copy;
+  lang: Lang;
+  years: number[];
+  outside: boolean;
+  onChange: (next: Milestone) => void;
+  onRemove: () => void;
+}) {
+  const label = (text: string, note?: string) => (
+    <Flex gap="1" align="baseline" mb="1">
+      <Text as="div" size="1" color="gray">
+        {text}
+      </Text>
+      {note ? (
+        <Text as="div" size="1" color="amber">
+          {note}
+        </Text>
+      ) : null}
+    </Flex>
+  );
+
+  return (
+    <Card size="1" mb="2">
+      <Flex gap="2" align="end" wrap="wrap">
+        <Box style={{ flex: "2 1 9rem" }}>
+          {label(t.mName)}
+          <TextField.Root
+            size="1"
+            value={m.name}
+            maxLength={60}
+            placeholder={t.mNamePlaceholder}
+            onChange={(e) => onChange({ ...m, name: e.target.value })}
+          />
+        </Box>
+
+        <Box style={{ flex: "1 1 6rem" }}>
+          {label(t.mYear, outside ? t.mOutsideRun : undefined)}
+          <Select.Root
+            size="1"
+            value={String(m.year)}
+            onValueChange={(v) => onChange({ ...m, year: Number(v) })}
+          >
+            <Select.Trigger style={{ width: "100%" }} aria-label={t.mYear} />
+            <Select.Content position="popper">
+              {years.map((y) => (
+                <Select.Item key={y} value={String(y)}>
+                  {y}
+                </Select.Item>
+              ))}
+            </Select.Content>
+          </Select.Root>
+        </Box>
+
+        <Box style={{ flex: "1 1 8rem" }}>
+          {label(t.mUpfront)}
+          <TextField.Root
+            size="1"
+            inputMode="numeric"
+            value={plain(m.upfront, lang)}
+            onChange={(e) => onChange({ ...m, upfront: digits(e.target.value) })}
+          />
+        </Box>
+
+        <Box style={{ flex: "1 1 8rem" }}>
+          {label(t.mAnnual)}
+          <TextField.Root
+            size="1"
+            inputMode="numeric"
+            value={plain(m.annual, lang)}
+            onChange={(e) => onChange({ ...m, annual: digits(e.target.value) })}
+          />
+        </Box>
+
+        <Box style={{ flex: "0 1 5rem" }}>
+          {label(t.mYears, m.years === 0 ? t.mYearsForever : undefined)}
+          <TextField.Root
+            size="1"
+            inputMode="numeric"
+            value={String(m.years)}
+            onChange={(e) => onChange({ ...m, years: Math.min(100, digits(e.target.value)) })}
+          />
+        </Box>
+
+        <Button size="1" variant="ghost" color="gray" onClick={onRemove} aria-label={t.removeMilestone}>
+          {t.removeMilestone}
+        </Button>
+      </Flex>
+    </Card>
+  );
+}
+
 export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
   const langRaw = useSyncExternalStore(subscribeToStored, readStoredLangRaw, readServerLangRaw);
   const [langEdit, setLangEdit] = useState<Lang | null>(null);
@@ -248,6 +366,39 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
   const years = [...new Set(snapshot.months.map((m) => Number(m.month.slice(0, 4))))];
   for (let y = lastRealYear + 1; y <= lastRealYear + 20; y++) years.push(y);
   const horizon = `${years[years.length - 1]}-12`;
+
+  // Milestones live in the draft like every other control, so one Apply moves
+  // the whole scenario.
+  const setMilestones = (next: Milestone[]) => setDraftEdit({ ...draft, milestones: next });
+  const lastRunYear = preview.months.length
+    ? Number(preview.months[preview.months.length - 1].month.slice(0, 4))
+    : lastRealYear;
+  const newMilestoneYear = Math.min(
+    Math.max(Number(draft.startMonth.slice(0, 4)), lastRealYear),
+    years[years.length - 1],
+  );
+  // Derived from the ids already in the list rather than a clock or a random
+  // source: the compiler rejects impure calls in render, and a deterministic id
+  // also survives a reload unchanged.
+  const nextId = `m${
+    draft.milestones.reduce((max, x) => Math.max(max, Number(x.id.replace(/\D/g, "")) || 0), 0) + 1
+  }`;
+  const addMilestone = (preset?: (typeof PRESETS)[number]) => {
+    if (draft.milestones.length >= MAX_MILESTONES) return;
+    setMilestones([
+      ...draft.milestones,
+      {
+        id: nextId,
+        name: preset ? t[preset.label] : "",
+        year: newMilestoneYear,
+        upfront: preset?.upfront ?? 0,
+        annual: preset?.annual ?? 0,
+        years: preset?.years ?? 0,
+      },
+    ]);
+  };
+  const full = draft.milestones.length >= MAX_MILESTONES;
+  const hasMilestones = result.milestoneTotal > 0;
 
   // A projected run is not "priced" on any real date — it ends on an assumed one.
   const inflationPerYear = result.months.length
@@ -493,6 +644,57 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
 
           <Separator size="4" my="4" />
 
+          <Flex align="center" gap="1" mb="1">
+            <Text size="2" weight="bold">
+              {t.milestonesHeading}
+            </Text>
+            <InfoDot text={t.milestonesHelp} />
+          </Flex>
+          <Text as="p" size="1" color="gray" mb="3">
+            {t.milestonesIntro}
+          </Text>
+
+          {draft.milestones.map((m) => (
+            <MilestoneRow
+              key={m.id}
+              m={m}
+              t={t}
+              lang={lang}
+              years={years}
+              outside={m.year > lastRunYear}
+              onChange={(next) =>
+                setMilestones(draft.milestones.map((x) => (x.id === m.id ? next : x)))
+              }
+              onRemove={() => setMilestones(draft.milestones.filter((x) => x.id !== m.id))}
+            />
+          ))}
+
+          {draft.milestones.length === 0 ? (
+            <Text as="p" size="1" color="gray" mb="3">
+              {t.milestonesNone}
+            </Text>
+          ) : null}
+
+          <Flex gap="2" wrap="wrap" align="center">
+            {PRESETS.map((preset) => (
+              <Button
+                key={preset.label}
+                size="1"
+                variant="soft"
+                color="gray"
+                disabled={full}
+                onClick={() => addMilestone(preset)}
+              >
+                + {t[preset.label]}
+              </Button>
+            ))}
+            <Button size="1" variant="ghost" color="gray" disabled={full} onClick={() => addMilestone()}>
+              {t.addMilestone}
+            </Button>
+          </Flex>
+
+          <Separator size="4" my="4" />
+
           <Flex justify="between" align="center" gap="3" wrap="wrap">
             <Text size="2" color="gray">
               {preview.firstContribution === preview.lastContribution
@@ -519,6 +721,14 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
               note={t.inTodaysMoney(money(result.paidInToday, lang))}
               help={t.paidInHelp}
             />
+            {hasMilestones ? (
+              <Stat
+                label={t.milestoneTotalLabel}
+                value={money(result.milestoneTotal, lang)}
+                note={t.inTodaysMoney(money(result.milestoneTotalToday, lang))}
+                help={t.milestoneTotalHelp}
+              />
+            ) : null}
             <Stat
               label={t.windowLabel}
               value={`${t.windowLength(result.months.length)} · ${
@@ -579,21 +789,45 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
               <Text as="div" size="7" weight="bold" style={{ letterSpacing: "-0.02em" }}>
                 {money(c.value, lang)}
               </Text>
-              <Tooltip content={t.beforeInflationHelp}>
-                <Text as="div" size="2" color="gray" style={{ cursor: "help" }}>
-                  {signedMoney(c.profit, lang)} {t.onWhatYouPaidIn}
-                </Text>
-              </Tooltip>
-              {/* The nominal figure on its own invites "and after inflation?" */}
-              <Flex align="center" gap="1" mb="2">
-                <Text as="div" size="2" color="gray">
-                  {signedMoney(c.realProfit, lang)} {t.afterInflationShort}
-                </Text>
-                <InfoDot text={t.afterInflationHelp} />
-              </Flex>
-              <Badge color={ACCENT[c.key]} variant="soft">
-                {percent(c.xirr, 2, lang)} {t.aYear}
-              </Badge>
+              {c.brokeMonth ? (
+                // A pot that ran dry earned a return on the way down, and saying
+                // so beside a balance of zero reads as nonsense. What the reader
+                // needs here is that the plan did not survive, and when.
+                <Box mb="2">
+                  <Badge color="red" variant="soft">
+                    {t.broke}
+                  </Badge>
+                  <Text as="div" size="2" color="red" mt="1">
+                    {t.brokeLine(monthName(c.brokeMonth, lang), money(c.unpaid, lang))}
+                  </Text>
+                  <Text as="div" size="1" color="gray" mt="1">
+                    −{money(c.spent, lang)} {t.spentOnMilestones}
+                  </Text>
+                </Box>
+              ) : (
+                <>
+                  <Tooltip content={t.beforeInflationHelp}>
+                    <Text as="div" size="2" color="gray" style={{ cursor: "help" }}>
+                      {signedMoney(c.profit, lang)} {t.onWhatYouPaidIn}
+                    </Text>
+                  </Tooltip>
+                  {/* The nominal figure on its own invites "and after inflation?" */}
+                  <Flex align="center" gap="1" mb="2">
+                    <Text as="div" size="2" color="gray">
+                      {signedMoney(c.realProfit, lang)} {t.afterInflationShort}
+                    </Text>
+                    <InfoDot text={t.afterInflationHelp} />
+                  </Flex>
+                  <Badge color={ACCENT[c.key]} variant="soft">
+                    {percent(c.xirr, 2, lang)} {t.aYear}
+                  </Badge>
+                  {c.spent > 0 ? (
+                    <Text as="div" size="1" color="gray" mt="2">
+                      −{money(c.spent, lang)} {t.spentOnMilestones}
+                    </Text>
+                  ) : null}
+                </>
+              )}
               {/* What the pot would pay, and whether that is enough to live on. */}
               <Separator size="4" my="3" />
               <Flex align="center" gap="1">
@@ -694,6 +928,9 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
                     <Table.Row>
                       <Table.ColumnHeaderCell>{t.thMonth}</Table.ColumnHeaderCell>
                       <Table.ColumnHeaderCell>{t.thPutIn}</Table.ColumnHeaderCell>
+                      {hasMilestones ? (
+                        <Table.ColumnHeaderCell>{t.thMilestoneCost}</Table.ColumnHeaderCell>
+                      ) : null}
                       <Table.ColumnHeaderCell>{t.thPaidInSoFar}</Table.ColumnHeaderCell>
                       <Table.ColumnHeaderCell>{t.thEtfPrice}</Table.ColumnHeaderCell>
                       <Table.ColumnHeaderCell>{t.thGoldPrice}</Table.ColumnHeaderCell>
@@ -707,6 +944,15 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
                       <Table.Row key={m.month}>
                         <Table.RowHeaderCell>{m.month}</Table.RowHeaderCell>
                         <Table.Cell>{money(m.contribution, lang)}</Table.Cell>
+                        {hasMilestones ? (
+                          <Table.Cell>
+                            {m.milestoneCost > 0 ? (
+                              <Text color="red">−{money(m.milestoneCost, lang)}</Text>
+                            ) : (
+                              "—"
+                            )}
+                          </Table.Cell>
+                        ) : null}
                         <Table.Cell>{money(m.paidIn, lang)}</Table.Cell>
                         <Table.Cell>{plain(m.etfPrice, lang)} ₫</Table.Cell>
                         <Table.Cell>{money(m.goldPrice, lang)}</Table.Cell>

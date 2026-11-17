@@ -65,6 +65,30 @@ export interface Copy {
   aYear: string;
   winner: string;
 
+  milestonesHeading: string;
+  milestonesIntro: string;
+  milestonesHelp: string;
+  milestonesNone: string;
+  addMilestone: string;
+  removeMilestone: string;
+  mName: string;
+  mNamePlaceholder: string;
+  mYear: string;
+  mUpfront: string;
+  mAnnual: string;
+  mYears: string;
+  mYearsForever: string;
+  mOutsideRun: string;
+  presetHouse: string;
+  presetCar: string;
+  presetChild: string;
+  milestoneTotalLabel: string;
+  milestoneTotalHelp: string;
+  spentOnMilestones: string;
+  broke: string;
+  brokeLine: (month: string, amount: string) => string;
+  thMilestoneCost: string;
+
   today: string;
   paidInShort: string;
 
@@ -182,6 +206,33 @@ const EN: Copy = {
     `covers ${pct} — short ${short} a month; the pot would need to reach ${need}`,
   aYear: "a year",
   winner: "Best",
+
+  milestonesHeading: "Life milestones",
+  milestonesIntro:
+    "A house, a car, a child. Each one takes money out of the plan in the year you set — and keeps taking it.",
+  milestonesHelp:
+    "Both amounts are in today's money; each is inflated to the year the cost actually falls. The money comes out of your saving first, and once that is not enough the plan sells ETF units or gold to cover it — gold sold back to a shop crosses the spread, as it would in life. A house is counted as spent, not as an asset: this page measures what a pot pays you each month, and a home you live in pays you nothing. So the figures below tell you what the purchase cost your retirement, not what you are worth.",
+  milestonesNone: "No milestones yet. Add one to see what the plan can take.",
+  addMilestone: "Add a milestone",
+  removeMilestone: "Remove",
+  mName: "What it is",
+  mNamePlaceholder: "A house",
+  mYear: "From",
+  mUpfront: "Up front",
+  mAnnual: "Every year",
+  mYears: "For",
+  mYearsForever: "to the end",
+  mOutsideRun: "outside the run",
+  presetHouse: "House",
+  presetCar: "Car",
+  presetChild: "Child",
+  milestoneTotalLabel: "Milestones cost",
+  milestoneTotalHelp:
+    "Everything the milestones took over the run, in the dong of each year, with the restatement in today's money underneath.",
+  spentOnMilestones: "went on milestones",
+  broke: "Ran dry",
+  brokeLine: (month, amount) => `nothing left from ${month} — ${amount} unpaid`,
+  thMilestoneCost: "Milestones",
 
   today: "Today",
   paidInShort: "Paid in",
@@ -339,6 +390,33 @@ const VI: Copy = {
     `mới đáp ứng ${pct} — thiếu ${short}/tháng; danh mục cần đạt ${need}`,
   aYear: "mỗi năm",
   winner: "Cao nhất",
+
+  milestonesHeading: "Dấu mốc cuộc đời",
+  milestonesIntro:
+    "Mua nhà, mua xe, sinh con. Mỗi mốc rút tiền ra khỏi kế hoạch từ năm bạn đặt — và rút đều từ đó.",
+  milestonesHelp:
+    "Cả hai số đều nhập theo giá hôm nay; máy tự quy ra giá của năm mà khoản đó thực sự phải trả. Tiền được trừ vào phần tiết kiệm hằng tháng trước, khi không đủ thì kế hoạch bán bớt chứng chỉ quỹ hoặc vàng ra trả — bán vàng lại cho tiệm thì chịu chênh lệch mua bán, đúng như ngoài đời. Căn nhà ở đây tính là tiêu mất chứ không tính là tài sản: trang này đo xem mỗi tháng danh mục trả cho bạn bao nhiêu, mà căn nhà bạn đang ở thì không trả đồng nào. Nên các con số dưới đây cho biết lần mua đó lấy mất bao nhiêu của tuổi hưu, không phải bạn đang có bao nhiêu.",
+  milestonesNone: "Chưa có mốc nào. Thêm một cái để xem kế hoạch chịu được tới đâu.",
+  addMilestone: "Thêm mốc",
+  removeMilestone: "Xoá",
+  mName: "Tên mốc",
+  mNamePlaceholder: "Mua nhà",
+  mYear: "Từ năm",
+  mUpfront: "Trả ngay",
+  mAnnual: "Mỗi năm",
+  mYears: "Trong",
+  mYearsForever: "đến hết",
+  mOutsideRun: "ngoài kỳ tính",
+  presetHouse: "Nhà",
+  presetCar: "Xe",
+  presetChild: "Con",
+  milestoneTotalLabel: "Các mốc ngốn",
+  milestoneTotalHelp:
+    "Tổng số tiền các mốc lấy đi trong cả kỳ, tính theo giá từng năm, kèm dòng quy về giá hôm nay ở dưới.",
+  spentOnMilestones: "đã chi cho các mốc",
+  broke: "Cạn tiền",
+  brokeLine: (month, amount) => `hết sạch từ ${month} — còn thiếu ${amount}`,
+  thMilestoneCost: "Mốc",
 
   today: "Hôm nay",
   paidInShort: "Vốn bỏ ra",

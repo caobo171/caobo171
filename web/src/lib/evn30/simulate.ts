@@ -63,6 +63,7 @@ export const DEFAULT_INPUTS: Inputs = {
   fixedAmount: 2_000_000,
   monthlyCapVnd: 50_000_000,
   monthlySpend: 20_000_000,
+  milestones: [],
 };
 
 /**
@@ -220,6 +221,8 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
     projectedFrom: null,
     assumedAnnual: null,
     fittedOver: null,
+    milestoneTotal: 0,
+    milestoneTotalToday: 0,
     channels: [],
   };
   if (!rows.length) return empty;
@@ -239,13 +242,78 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
   let goldCash = 0;
   let goldChi = 0;
   let paidIn = 0;
-  let etfMonths = 0;
-  let goldMonths = 0;
-  let bankMonths = 0;
+  let milestoneTotal = 0;
+  let milestoneTotalToday = 0;
   let ceilingYear: number | null = null;
 
   const months: MonthPoint[] = [];
-  const flows: Array<{ day: number; amount: number }> = [];
+
+  /**
+   * One channel's cash position. A milestone does three things to a pot — it
+   * diverts money before it ever arrives, it forces a sale when that is not
+   * enough, and it can empty the pot outright. All three are recorded as they
+   * happen rather than reconstructed afterwards, because only the loop knows
+   * what each pot could actually afford that month.
+   */
+  interface Pot {
+    /** Milestone money this pot funded. */
+    spent: number;
+    /** Milestone money it could not fund. */
+    unpaid: number;
+    brokeMonth: string | null;
+    /** Money that truly reached the pot: contributions less what was taken
+     *  back out. Profit is measured against this, not against gross saving. */
+    netIn: number;
+    netInToday: number;
+    flows: Array<{ day: number; amount: number }>;
+    monthsBought: number;
+    /** Cumulative money actually taken back out of the pot — as opposed to
+     *  diverted before it arrived. */
+    fromPot: number;
+    /** The pot's value each month with withdrawals added back, so a deliberate
+     *  withdrawal is not mistaken for the market falling. */
+    curve: number[];
+  }
+  const newPot = (): Pot => ({
+    spent: 0,
+    unpaid: 0,
+    brokeMonth: null,
+    netIn: 0,
+    netInToday: 0,
+    flows: [],
+    monthsBought: 0,
+    fromPot: 0,
+    curve: [],
+  });
+  const pots: Record<ChannelKey, Pot> = { gold: newPot(), etf: newPot(), bank: newPot() };
+  const CHANNELS: ChannelKey[] = ["gold", "etf", "bank"];
+
+  // Today is the reference for every "in today's money" figure on the page, so
+  // it is needed inside the loop as well as after it.
+  const cpiRef = cpiFor(snapshot.cpi, Number(snapshot.latest.date.slice(0, 4)));
+  const firstYear = Number(rows[0].month.slice(0, 4));
+  const milestones = inputs.milestones ?? [];
+  const upfrontSeen = new Set<string>();
+
+  const record = (
+    pot: Pot,
+    row: Row,
+    cost: number,
+    short: number,
+    contribution: number,
+    deflate: number,
+  ) => {
+    const funded = cost - short;
+    // Anything the month's saving could not cover had to be sold out of the pot.
+    pot.fromPot += Math.max(0, funded - contribution);
+    pot.spent += funded;
+    pot.unpaid += short;
+    if (short > 0 && pot.brokeMonth === null) pot.brokeMonth = row.month;
+    const net = contribution - funded;
+    pot.netIn += net;
+    pot.netInToday += net * deflate;
+    if (net !== 0) pot.flows.push({ day: dayNumber(row.date), amount: net });
+  };
 
   // Money already saved before the plan starts, put to work in the first month
   // under the same lot and spread rules as everything else.
@@ -255,7 +323,13 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
     goldCash += seed;
     bank += seed;
     paidIn += seed;
-    flows.push({ day: dayNumber(rows[0].date), amount: seed });
+    const day = dayNumber(rows[0].date);
+    const deflate = cpiRef / cpiFor(snapshot.cpi, firstYear);
+    for (const key of CHANNELS) {
+      pots[key].netIn += seed;
+      pots[key].netInToday += seed * deflate;
+      pots[key].flows.push({ day, amount: seed });
+    }
   }
 
   rows.forEach((row, i) => {
@@ -277,37 +351,108 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
     }
 
     paidIn += contribution;
-    if (contribution > 0) {
-      flows.push({ day: dayNumber(row.date), amount: contribution });
-      bankMonths += 1;
-    }
+    if (contribution > 0) pots.bank.monthsBought += 1;
 
-    // VN30 ETF — whole lots only; the remainder waits as cash.
-    etfCash += contribution;
-    const lotCost = row.etf * 1000 * ETF_LOT * (1 + ETF_FEE);
-    const lots = Math.floor(etfCash / lotCost);
-    if (lots > 0) {
-      etfCash -= lots * lotCost;
-      etfUnits += lots * ETF_LOT;
-      etfFees += lots * row.etf * 1000 * ETF_LOT * ETF_FEE;
-      etfMonths += 1;
+    // What the milestones take this month. The reader types prices they know —
+    // today's — so each one is inflated to the year the cost actually falls.
+    const inflate = cpiFor(snapshot.cpi, year) / cpiRef;
+    const deflate = 1 / inflate;
+    let milestoneCost = 0;
+    for (const m of milestones) {
+      if (year < m.year) continue;
+      if (!upfrontSeen.has(m.id)) {
+        upfrontSeen.add(m.id);
+        // A purchase dated before the plan begins already happened; only its
+        // running cost still falls on these years.
+        if (m.year >= firstYear) milestoneCost += Math.max(0, m.upfront) * inflate;
+      }
+      const span = m.years > 0 ? m.years : Infinity;
+      if (year < m.year + span) milestoneCost += (Math.max(0, m.annual) * inflate) / 12;
     }
+    milestoneTotal += milestoneCost;
+    milestoneTotalToday += milestoneCost * deflate;
 
-    // Bank — compounds on what was already there, then this month goes in. The
-    // table quotes 12-month rates, which are effective: a deposit advertised at
-    // 6.5% pays 6.5% over the year, so the monthly factor is the twelfth root,
-    // not r/12 (which would quietly pay 6.70%).
-    bank = bank * (1 + rateFor(snapshot.deposit, year) / 100) ** (1 / 12) + contribution;
+    // The month's net cash. Negative means the milestones cost more than was
+    // saved, and the difference has to come out of the pot.
+    const net = contribution - milestoneCost;
 
-    // Gold — bought at the shop's selling price, in whole chỉ.
-    goldCash += contribution;
-    const chiCost = (row.goldSell * 1000) / CHI_PER_TAEL;
-    const chi = Math.floor(goldCash / chiCost);
-    if (chi > 0) {
-      goldCash -= chi * chiCost;
-      goldChi += chi;
-      goldMonths += 1;
+    // VN30 ETF — whole lots only, buying or selling; the remainder waits as cash.
+    etfCash += net;
+    let etfShort = 0;
+    if (etfCash < 0) {
+      const lotValue = row.etf * 1000 * ETF_LOT;
+      const lots = Math.min(
+        Math.ceil(-etfCash / (lotValue * (1 - ETF_FEE))),
+        Math.floor(etfUnits / ETF_LOT),
+      );
+      if (lots > 0) {
+        etfUnits -= lots * ETF_LOT;
+        etfCash += lots * lotValue * (1 - ETF_FEE);
+        etfFees += lots * lotValue * ETF_FEE;
+      }
+      if (etfCash < 0) {
+        etfShort = -etfCash;
+        etfCash = 0;
+      }
+    } else {
+      const lotCost = row.etf * 1000 * ETF_LOT * (1 + ETF_FEE);
+      const lots = Math.floor(etfCash / lotCost);
+      if (lots > 0) {
+        etfCash -= lots * lotCost;
+        etfUnits += lots * ETF_LOT;
+        etfFees += lots * row.etf * 1000 * ETF_LOT * ETF_FEE;
+        pots.etf.monthsBought += 1;
+      }
     }
+    record(pots.etf, row, milestoneCost, etfShort, contribution, deflate);
+
+    // Bank — compounds on what was already there, then the month's net cash
+    // lands. The table quotes 12-month rates, which are effective: a deposit
+    // advertised at 6.5% pays 6.5% over the year, so the monthly factor is the
+    // twelfth root, not r/12 (which would quietly pay 6.70%).
+    bank = bank * (1 + rateFor(snapshot.deposit, year) / 100) ** (1 / 12);
+    let bankShort = 0;
+    if (net >= 0) {
+      bank += net;
+    } else {
+      const taken = Math.min(bank, -net);
+      bank -= taken;
+      bankShort = -net - taken;
+    }
+    record(pots.bank, row, milestoneCost, bankShort, contribution, deflate);
+
+    // Gold — bought at the shop's selling price and sold back at its buying
+    // price, in whole chỉ. Paying for a milestone out of gold therefore crosses
+    // the spread, which is exactly what it costs in a shop.
+    goldCash += net;
+    let goldShort = 0;
+    if (goldCash < 0) {
+      const chiValue = (row.goldBuy * 1000) / CHI_PER_TAEL;
+      const sold = Math.min(Math.ceil(-goldCash / chiValue), goldChi);
+      if (sold > 0) {
+        goldChi -= sold;
+        goldCash += sold * chiValue;
+      }
+      if (goldCash < 0) {
+        goldShort = -goldCash;
+        goldCash = 0;
+      }
+    } else {
+      const chiCost = (row.goldSell * 1000) / CHI_PER_TAEL;
+      const chi = Math.floor(goldCash / chiCost);
+      if (chi > 0) {
+        goldCash -= chi * chiCost;
+        goldChi += chi;
+        pots.gold.monthsBought += 1;
+      }
+    }
+    record(pots.gold, row, milestoneCost, goldShort, contribution, deflate);
+
+    const goldValue = (goldChi * row.goldBuy * 1000) / CHI_PER_TAEL + goldCash;
+    const etfValue = etfUnits * row.etf * 1000 + etfCash;
+    pots.gold.curve.push(goldValue + pots.gold.fromPot);
+    pots.etf.curve.push(etfValue + pots.etf.fromPot);
+    pots.bank.curve.push(bank + pots.bank.fromPot);
 
     months.push({
       month: row.month,
@@ -315,9 +460,10 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
       etfPrice: row.etf * 1000,
       goldPrice: row.goldSell * 1000,
       contribution,
+      milestoneCost,
       paidIn,
-      gold: (goldChi * row.goldBuy * 1000) / CHI_PER_TAEL + goldCash,
-      etf: etfUnits * row.etf * 1000 + etfCash,
+      gold: goldValue,
+      etf: etfValue,
       bank,
     });
   });
@@ -338,8 +484,6 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
   // Everything "real" is quoted in TODAY's money, never the end date's. For a
   // backtest the two are the same; for a run ending in 2035, saying "worth 227
   // million after inflation" has to mean 227 million now, not 227 million then.
-  const todayYear = Number(snapshot.latest.date.slice(0, 4));
-  const cpiRef = cpiFor(snapshot.cpi, todayYear);
   const toTodaysMoney = cpiRef / cpiEnd;
 
   let paidInToday = seed * (cpiRef / cpiStart);
@@ -357,36 +501,46 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
   // The final month row was priced at that month's first trading day. Restate it
   // at the closing prices so the chart ends exactly where the headline does.
   const lastPoint = months[months.length - 1];
+  for (const key of CHANNELS) {
+    pots[key].curve[pots[key].curve.length - 1] = finals[key] + pots[key].fromPot;
+  }
   lastPoint.gold = finals.gold;
   lastPoint.etf = finals.etf;
   lastPoint.bank = finals.bank;
   lastPoint.etfPrice = endPrices.etf * 1000;
   lastPoint.goldPrice = endPrices.goldSell * 1000;
 
-  const extras: Record<ChannelKey, { idleCash: number; units: number; monthsBought: number }> = {
-    gold: { idleCash: goldCash, units: goldChi, monthsBought: goldMonths },
-    etf: { idleCash: etfCash, units: etfUnits, monthsBought: etfMonths },
-    bank: { idleCash: 0, units: 0, monthsBought: bankMonths },
+  const extras: Record<ChannelKey, { idleCash: number; units: number }> = {
+    gold: { idleCash: goldCash, units: goldChi },
+    etf: { idleCash: etfCash, units: etfUnits },
+    bank: { idleCash: 0, units: 0 },
   };
 
-  const seriesFor: Record<ChannelKey, number[]> = {
-    gold: months.map((m) => m.gold),
-    etf: months.map((m) => m.etf),
-    bank: months.map((m) => m.bank),
-  };
-
-  const channels: ChannelResult[] = (["gold", "etf", "bank"] as ChannelKey[]).map((key) => {
+  const channels: ChannelResult[] = CHANNELS.map((key) => {
+    const pot = pots[key];
     const value = finals[key];
-    const profit = value - paidIn;
+    // Measured against what actually reached the pot. Money a milestone took
+    // was never invested here, so counting it as a loss would be wrong — and
+    // with no milestones `netIn` is simply everything paid in.
+    const profit = value - pot.netIn;
+    const invested = Math.max(pot.netIn, 0);
     return {
       key,
       value,
       profit,
-      profitPct: paidIn > 0 ? profit / paidIn : 0,
-      xirr: paidIn > 0 ? xirr(flows, value, endDay) : 0,
+      // A plan that spent more than it saved nets out below zero, and a rate
+      // measured against that is meaningless — fall back to gross saving. The
+      // return itself is still well defined: the flows simply include the
+      // money taken back out.
+      profitPct: invested > 0 ? profit / invested : paidIn > 0 ? profit / paidIn : 0,
+      xirr: pot.flows.length ? xirr(pot.flows, value, endDay) : 0,
       realValue: value * toTodaysMoney,
-      realProfit: value * toTodaysMoney - paidInToday,
-      maxDrawdown: paidIn > 0 ? deepestFall(seriesFor[key]) : 0,
+      realProfit: value * toTodaysMoney - pot.netInToday,
+      maxDrawdown: paidIn > 0 ? deepestFall(pot.curve) : 0,
+      spent: pot.spent,
+      unpaid: pot.unpaid,
+      brokeMonth: pot.brokeMonth,
+      monthsBought: pot.monthsBought,
       ...extras[key],
     };
   });
@@ -409,6 +563,8 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
           bank: rateFor(snapshot.deposit, endYear) / 100,
         }
       : null,
+    milestoneTotal,
+    milestoneTotalToday,
     fittedOver: isProjection
       ? { from: snapshot.months[0].month, to: snapshot.months[snapshot.months.length - 1].month }
       : null,

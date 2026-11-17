@@ -17,16 +17,22 @@ function fmt(lang: Lang, dp: number): Intl.NumberFormat {
 }
 
 /**
- * 2_004_224_688 → "2,004.2M ₫" / "2.004,2 triệu ₫". Vietnamese amounts are long,
- * so they are shown in millions; anything under a million would round to
- * "0.2M" and goes in thousands instead.
+ * Picks the unit the amount actually belongs in: thousands, millions, or tỉ.
+ * Vietnamese amounts are long, and a plan running twenty years reaches billions,
+ * where a single unit stops working — six billion dong rendered in millions is
+ * "6.000,0 triệu ₫", which nobody reads at a glance. Each tier keeps three or
+ * four significant figures, so tỉ gets two decimals where triệu gets one.
  */
 export function money(vnd: number, lang: Lang = "en"): string {
   if (!Number.isFinite(vnd) || vnd === 0) return "0 ₫";
-  if (Math.abs(vnd) < 1_000_000) {
+  const size = Math.abs(vnd);
+  if (size < 1_000_000) {
     return `${fmt(lang, 0).format(vnd / 1000)}${lang === "vi" ? " nghìn ₫" : "k ₫"}`;
   }
-  return `${fmt(lang, 1).format(vnd / 1_000_000)}${lang === "vi" ? " triệu ₫" : "M ₫"}`;
+  if (size < 1_000_000_000) {
+    return `${fmt(lang, 1).format(vnd / 1_000_000)}${lang === "vi" ? " triệu ₫" : "M ₫"}`;
+  }
+  return `${fmt(lang, 2).format(vnd / 1_000_000_000)}${lang === "vi" ? " tỷ ₫" : "B ₫"}`;
 }
 
 /** Always carries a sign, so a profit and a loss are told apart at a glance. */

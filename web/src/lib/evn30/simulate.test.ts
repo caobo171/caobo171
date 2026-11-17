@@ -292,8 +292,8 @@ describe("simulate", () => {
 });
 
 describe("format", () => {
-  test("money renders millions and billions in the Vietnamese shorthand", () => {
-    expect(money(2_004_224_688)).toBe("2,004.2M ₫");
+  test("money renders each amount in the unit it belongs to", () => {
+    expect(money(2_004_224_688)).toBe("2.00B ₫");
     expect(money(854_407_688)).toBe("854.4M ₫");
     expect(money(4_687_500)).toBe("4.7M ₫");
     expect(money(0)).toBe("0 ₫");
@@ -312,7 +312,7 @@ describe("format", () => {
   });
 
   test("signedMoney always carries a sign", () => {
-    expect(signedMoney(1_149_817_000)).toBe("+1,149.8M ₫");
+    expect(signedMoney(1_149_817_000)).toBe("+1.15B ₫");
     expect(signedMoney(-5_000_000)).toBe("-5.0M ₫");
   });
 });
@@ -354,5 +354,158 @@ describe("retirement", () => {
     expect(r.coverage).toBe(0);
     expect(r.covers).toBe(false);
     expect(r.shortfallMonthly).toBeCloseTo(20_000_000, 0);
+  });
+});
+
+describe("milestones", () => {
+  // A plain run: a flat contribution over five years of real prices, so the
+  // only thing moving between cases is the milestone itself.
+  const PLAIN = {
+    ...DEFAULT_INPUTS,
+    startMonth: "2016-01",
+    endMonth: "2026-11",
+    mode: "fixed" as const,
+    fixedAmount: 10_000_000,
+    milestones: [],
+  };
+
+  // Sized so all three pots can actually afford it — the "cannot afford" case
+  // has a test of its own, and this one is about the money moving, not failing.
+  const house = {
+    id: "h",
+    name: "Mua nhà",
+    year: 2022,
+    upfront: 400_000_000,
+    annual: 60_000_000,
+    years: 10,
+  };
+
+  test("a run with no milestones is untouched", () => {
+    const r = simulate(snapshot, PLAIN);
+    expect(r.milestoneTotal).toBe(0);
+    expect(r.months.every((m) => m.milestoneCost === 0)).toBe(true);
+    expect(channel(r, "bank").brokeMonth).toBeNull();
+    expect(channel(r, "bank").spent).toBe(0);
+  });
+
+  test("the upfront cost lands in January of its year, the annual cost spreads over the months", () => {
+    const r = simulate(snapshot, { ...PLAIN, milestones: [house] });
+    const at = (month: string) => r.months.find((m) => m.month === month)!;
+
+    expect(at("2021-12").milestoneCost).toBe(0);
+    // January carries the down payment plus that month's share of the annual cost.
+    expect(at("2022-01").milestoneCost).toBeGreaterThan(at("2022-02").milestoneCost);
+    expect(at("2022-01").milestoneCost - at("2022-02").milestoneCost).toBeCloseTo(
+      at("2022-02").milestoneCost * 80, // 400M upfront against 60M/12 a month
+      -4,
+    );
+    expect(at("2022-06").milestoneCost).toBeCloseTo(at("2022-02").milestoneCost, 0);
+  });
+
+  test("an amount typed today costs exactly that in today's year, and less in a past one", () => {
+    // The field says "today's money", so a milestone dated this year must not
+    // be inflated at all.
+    const now = { ...house, year: 2026, annual: 0, upfront: 100_000_000 };
+    const r = simulate(snapshot, { ...PLAIN, milestones: [now] });
+    expect(r.months.find((m) => m.month === "2026-01")!.milestoneCost).toBeCloseTo(100_000_000, 0);
+
+    // The same purchase in 2018 took fewer dong, in exactly the CPI ratio the
+    // snapshot publishes.
+    const then = simulate(snapshot, { ...PLAIN, milestones: [{ ...now, year: 2018 }] });
+    const paid2018 = then.months.find((m) => m.month === "2018-01")!.milestoneCost;
+    expect(paid2018 / 100_000_000).toBeCloseTo(snapshot.cpi["2018"] / snapshot.cpi["2026"], 4);
+  });
+
+  test("the annual cost stops after the years it was given", () => {
+    const car = { id: "c", name: "Xe", year: 2017, upfront: 0, annual: 60_000_000, years: 2 };
+    const r = simulate(snapshot, { ...PLAIN, milestones: [car] });
+    const paidIn = (year: string) =>
+      r.months.filter((m) => m.month.startsWith(year)).reduce((a, m) => a + m.milestoneCost, 0);
+
+    expect(paidIn("2017")).toBeGreaterThan(0);
+    expect(paidIn("2018")).toBeGreaterThan(0);
+    expect(paidIn("2019")).toBe(0);
+  });
+
+  test("zero years means the cost runs to the end of the plan", () => {
+    const kid = { id: "k", name: "Con", year: 2018, upfront: 0, annual: 60_000_000, years: 0 };
+    const r = simulate(snapshot, { ...PLAIN, milestones: [kid] });
+    expect(r.months.find((m) => m.month === "2026-05")!.milestoneCost).toBeGreaterThan(0);
+  });
+
+  test("a milestone outside the window is ignored", () => {
+    const r = simulate(snapshot, { ...PLAIN, milestones: [{ ...house, year: 2045 }] });
+    expect(r.milestoneTotal).toBe(0);
+  });
+
+  test("the milestone takes real money out: every channel ends smaller", () => {
+    const base = simulate(snapshot, PLAIN);
+    const withHouse = simulate(snapshot, { ...PLAIN, milestones: [house] });
+
+    expect(withHouse.milestoneTotal).toBeGreaterThan(0);
+    for (const key of ["gold", "etf", "bank"]) {
+      expect(channel(withHouse, key).value).toBeLessThan(channel(base, key).value);
+      expect(channel(withHouse, key).spent).toBeCloseTo(withHouse.milestoneTotal, 0);
+      expect(channel(withHouse, key).brokeMonth).toBeNull();
+    }
+    // Gross saving out of salary is unchanged — the milestone diverts it, it
+    // does not stop you earning.
+    expect(withHouse.paidIn).toBeCloseTo(base.paidIn, 0);
+  });
+
+  test("profit is measured against what actually reached the pot", () => {
+    const r = simulate(snapshot, { ...PLAIN, milestones: [house] });
+    const bank = channel(r, "bank");
+    expect(bank.profit).toBeCloseTo(bank.value - (r.paidIn - bank.spent), 0);
+  });
+
+  test("a milestone the plan cannot afford marks the channel broke, and the pot floors at zero", () => {
+    const mansion = { id: "m", name: "Biệt thự", year: 2018, upfront: 5_000_000_000, annual: 0, years: 0 };
+    const r = simulate(snapshot, { ...PLAIN, fixedAmount: 1_000_000, milestones: [mansion] });
+    const bank = channel(r, "bank");
+
+    expect(bank.brokeMonth).toBe("2018-01");
+    expect(bank.value).toBeGreaterThanOrEqual(0);
+    expect(bank.unpaid).toBeGreaterThan(0);
+  });
+
+  test("a plan that spends more than it saved still reports the return it earned", () => {
+    // The default scenario saves ~854M and the house takes ~910M of it, so the
+    // money that ever sat in the pot nets out below zero. The pot still grew —
+    // that is how it paid for the house — and the rate has to say so instead of
+    // collapsing to nothing.
+    const big = { ...house, year: 2026, upfront: 800_000_000, annual: 120_000_000, years: 20 };
+    const r = simulate(snapshot, { ...DEFAULT_INPUTS, milestones: [big] });
+
+    expect(channel(r, "gold").spent).toBeGreaterThan(r.paidIn);
+    for (const c of r.channels) {
+      expect(c.xirr).not.toBe(0);
+      expect(c.xirr).toBeGreaterThan(0.01);
+    }
+  });
+
+  test("paying for a milestone is not recorded as a market crash", () => {
+    // Taking money out drops the pot exactly like a fall would. Measured naively
+    // the down payment reads as the worst drawdown in ten years, which would be
+    // a lie about the market.
+    const base = simulate(snapshot, PLAIN);
+    const withHouse = simulate(snapshot, { ...PLAIN, milestones: [house] });
+
+    // Not identical: the withdrawn money is added back at face value, where in
+    // truth it would have gone on rising and falling with the market. That
+    // leaves the adjusted figure a couple of points shallow — close enough that
+    // the column still describes the market, which naive accounting did not.
+    for (const key of ["gold", "etf", "bank"]) {
+      const gap = Math.abs(channel(withHouse, key).maxDrawdown - channel(base, key).maxDrawdown);
+      expect(gap).toBeLessThan(0.05);
+    }
+  });
+
+  test("a withdrawal still yields a believable rate of return", () => {
+    const r = simulate(snapshot, { ...PLAIN, milestones: [house] });
+    for (const c of r.channels) {
+      expect(c.xirr).toBeGreaterThan(-0.5);
+      expect(c.xirr).toBeLessThan(0.5);
+    }
   });
 });
