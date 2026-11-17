@@ -2,7 +2,7 @@ import Link from "next/link";
 import { GITHUB, WELE } from "../links";
 import styles from "./site-chrome.module.css";
 
-type Page = "home" | "resume";
+type Page = "home" | "resume" | "evn30";
 
 export function SiteHeader({ current }: { current?: Page }) {
   return (
@@ -18,6 +18,12 @@ export function SiteHeader({ current }: { current?: Page }) {
             aria-current={current === "resume" ? "page" : undefined}
           >
             Resume
+          </Link>
+          <Link
+            href="/evn30"
+            aria-current={current === "evn30" ? "page" : undefined}
+          >
+            VN30
           </Link>
           <a href={WELE} target="_blank" rel="noopener noreferrer">
             WELE

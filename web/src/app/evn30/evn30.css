@@ -1,0 +1,15 @@
+/*
+ * Loaded only by the /evn30 route. The `:has` guard keeps it from touching any
+ * page that does not render a Radix theme, even if the stylesheet lingers in a
+ * client-side navigation.
+ */
+body:has(.radix-themes) {
+  background: var(--color-background);
+  font-family: var(--default-font-family);
+  font-size: var(--font-size-3);
+  line-height: var(--line-height-3);
+}
+
+body > .radix-themes {
+  min-height: 100vh;
+}

@@ -27,7 +27,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={sourceSerif.variable}>
+    // /evn30 sets a light/dark class on <html> before paint; React must not fight it.
+    <html lang="en" className={sourceSerif.variable} suppressHydrationWarning>
       <body>{children}</body>
     </html>
   );
