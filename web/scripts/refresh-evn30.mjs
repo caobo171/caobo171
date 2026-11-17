@@ -144,7 +144,7 @@ const lastMonthOf = (byDate) => monthKey([...byDate.keys()].sort().at(-1));
  * units would still parse cleanly while producing a flattered or absurd result.
  * These are the checks that would have caught that.
  */
-function checkPlausible(months) {
+export function checkPlausible(months) {
   const fail = (m, why) => {
     throw new Error(`${m.month} looks wrong: ${why}. Refusing to write the snapshot.`);
   };
@@ -233,7 +233,11 @@ async function main() {
   console.log(`CPI years: ${Object.keys(cpi).join(", ")}`);
 }
 
-main().catch((err) => {
-  console.error(`refresh-evn30 failed: ${err.message}`);
-  process.exit(1);
-});
+// Only fetch when run as a command; importing this file (the guard is tested)
+// must not touch the network.
+if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+  main().catch((err) => {
+    console.error(`refresh-evn30 failed: ${err.message}`);
+    process.exit(1);
+  });
+}
