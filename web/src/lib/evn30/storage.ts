@@ -11,7 +11,7 @@ const MODES: SavingMode[] = ["percent", "fixed"];
 const BOUNDS = {
   salaryStart: [0, 10_000_000_000],
   initialCapital: [0, 1_000_000_000_000],
-  raisePct: [0, 20],
+  raisePct: [0, 50],
   salaryCeiling: [0, 10_000_000_000],
   savePct: [0, 100],
   fixedAmount: [0, 10_000_000_000],

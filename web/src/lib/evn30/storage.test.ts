@@ -55,6 +55,11 @@ describe("parseInputs", () => {
     expect(got!.raisePct).toBe(DEFAULT_INPUTS.raisePct);
   });
 
+  test("accepts a raise up to the slider's maximum", () => {
+    expect(parseInputs(JSON.stringify({ raisePct: 50 }))!.raisePct).toBe(50);
+    expect(parseInputs(JSON.stringify({ raisePct: 80 }))!.raisePct).toBe(50);
+  });
+
   test("clamps numbers to the range the controls allow", () => {
     const got = parseInputs(
       JSON.stringify({

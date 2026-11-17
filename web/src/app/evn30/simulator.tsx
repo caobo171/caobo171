@@ -406,7 +406,7 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
                     label={t.raiseEachYear}
                     value={[draft.raisePct]}
                     min={0}
-                    max={20}
+                    max={50}
                     step={1}
                     onValueChange={([v]) => set("raisePct", v)}
                   />
