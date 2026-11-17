@@ -5,9 +5,14 @@ const millions = new Intl.NumberFormat("en-US", {
 
 const whole = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 
-/** 2_004_224_688 → "2,004.2M ₫". Vietnamese amounts are long; millions read better. */
+/**
+ * 2_004_224_688 → "2,004.2M ₫". Vietnamese amounts are long; millions read
+ * better. Anything under a million would round to "0.2M", so it goes in
+ * thousands instead.
+ */
 export function money(vnd: number): string {
   if (!Number.isFinite(vnd) || vnd === 0) return "0 ₫";
+  if (Math.abs(vnd) < 1_000_000) return `${whole.format(vnd / 1000)}k ₫`;
   return `${millions.format(vnd / 1_000_000)}M ₫`;
 }
 

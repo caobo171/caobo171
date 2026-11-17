@@ -195,6 +195,13 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
     bank,
   };
 
+  // The final month row was priced at that month's first trading day. Restate it
+  // at today's prices so the chart ends exactly where the headline figures do.
+  const lastPoint = months[months.length - 1];
+  lastPoint.gold = finals.gold;
+  lastPoint.etf = finals.etf;
+  lastPoint.bank = finals.bank;
+
   const extras: Record<ChannelKey, { idleCash: number; unitsLabel: string; monthsBought: number }> =
     {
       gold: {

@@ -1,0 +1,179 @@
+"use client";
+
+import { Box, Flex, Text } from "@radix-ui/themes";
+import { useMemo, useState } from "react";
+
+import { money } from "@/lib/evn30/format";
+import type { MonthPoint } from "@/lib/evn30/types";
+
+const W = 820;
+const H = 300;
+const PAD = { left: 58, right: 10, top: 12, bottom: 26 };
+const PLOT_W = W - PAD.left - PAD.right;
+const PLOT_H = H - PAD.top - PAD.bottom;
+
+export const SERIES = [
+  { key: "gold", label: "SJC gold", color: "var(--amber-9)", width: 2.2 },
+  { key: "etf", label: "VN30 ETF", color: "var(--indigo-9)", width: 2 },
+  { key: "bank", label: "Bank savings", color: "var(--gray-8)", width: 1.8 },
+] as const;
+
+const PAID_COLOR = "var(--gray-11)";
+
+/** Axis labels need to be short: 2_004_000_000 → "2.0B". */
+function axisTick(vnd: number): string {
+  if (vnd === 0) return "0";
+  if (vnd >= 1_000_000_000) return `${(vnd / 1_000_000_000).toFixed(1)}B`;
+  return `${Math.round(vnd / 1_000_000)}M`;
+}
+
+export function Chart({ months }: { months: MonthPoint[] }) {
+  const [hover, setHover] = useState<number | null>(null);
+
+  const max = useMemo(
+    () => Math.max(1, ...months.flatMap((m) => [m.gold, m.etf, m.bank, m.paidIn])),
+    [months],
+  );
+
+  if (months.length < 2) return null;
+
+  const x = (i: number) => PAD.left + (i / (months.length - 1)) * PLOT_W;
+  const y = (v: number) => PAD.top + (1 - v / max) * PLOT_H;
+  const path = (pick: (m: MonthPoint) => number) =>
+    months.map((m, i) => `${x(i).toFixed(1)},${y(pick(m)).toFixed(1)}`).join(" ");
+
+  // A tick every other year, taken from the January rows.
+  const yearTicks = months
+    .map((m, i) => ({ i, year: Number(m.month.slice(0, 4)), isJan: m.month.endsWith("-01") }))
+    .filter((t) => t.isJan && t.year % 2 === 0);
+
+  const shown = hover === null ? months[months.length - 1] : months[hover];
+
+  return (
+    <Box>
+      <Flex gap="4" wrap="wrap" mb="2" align="baseline">
+        <Text size="1" color="gray" style={{ minWidth: "5.5rem" }}>
+          {hover === null ? "Today" : shown.month}
+        </Text>
+        {SERIES.map((s) => (
+          <Flex key={s.key} align="center" gap="1">
+            <Box
+              style={{ width: 9, height: 9, borderRadius: 2, background: s.color }}
+              aria-hidden
+            />
+            <Text size="1" color="gray">
+              {s.label}
+            </Text>
+            <Text size="1" weight="medium">
+              {money(shown[s.key])}
+            </Text>
+          </Flex>
+        ))}
+        <Flex align="center" gap="1">
+          <Box
+            style={{ width: 9, height: 2, background: PAID_COLOR, borderRadius: 2 }}
+            aria-hidden
+          />
+          <Text size="1" color="gray">
+            Paid in
+          </Text>
+          <Text size="1" weight="medium">
+            {money(shown.paidIn)}
+          </Text>
+        </Flex>
+      </Flex>
+
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        style={{ width: "100%", height: "auto", display: "block", touchAction: "pan-y" }}
+        role="img"
+        aria-label={`Value of each channel from ${months[0].month} to ${months[months.length - 1].month}`}
+        onMouseLeave={() => setHover(null)}
+        onMouseMove={(e) => {
+          const box = e.currentTarget.getBoundingClientRect();
+          const px = ((e.clientX - box.left) / box.width) * W;
+          const ratio = (px - PAD.left) / PLOT_W;
+          const i = Math.round(ratio * (months.length - 1));
+          setHover(i >= 0 && i < months.length ? i : null);
+        }}
+      >
+        {[0, 0.25, 0.5, 0.75, 1].map((f) => (
+          <g key={f}>
+            <line
+              x1={PAD.left}
+              x2={W - PAD.right}
+              y1={y(max * f)}
+              y2={y(max * f)}
+              stroke="var(--gray-4)"
+              strokeWidth="1"
+            />
+            <text
+              x={PAD.left - 8}
+              y={y(max * f) + 3.5}
+              textAnchor="end"
+              fontSize="10.5"
+              fill="var(--gray-10)"
+            >
+              {axisTick(max * f)}
+            </text>
+          </g>
+        ))}
+
+        {yearTicks.map((t) => (
+          <text
+            key={t.year}
+            x={x(t.i)}
+            y={H - 8}
+            textAnchor="middle"
+            fontSize="10.5"
+            fill="var(--gray-10)"
+          >
+            {t.year}
+          </text>
+        ))}
+
+        <polyline
+          points={path((m) => m.paidIn)}
+          fill="none"
+          stroke={PAID_COLOR}
+          strokeWidth="1.3"
+          strokeDasharray="4 3"
+        />
+        {SERIES.map((s) => (
+          <polyline
+            key={s.key}
+            points={path((m) => m[s.key])}
+            fill="none"
+            stroke={s.color}
+            strokeWidth={s.width}
+            strokeLinejoin="round"
+          />
+        ))}
+
+        {hover !== null && (
+          <g pointerEvents="none">
+            <line
+              x1={x(hover)}
+              x2={x(hover)}
+              y1={PAD.top}
+              y2={PAD.top + PLOT_H}
+              stroke="var(--gray-8)"
+              strokeWidth="1"
+            />
+            {SERIES.map((s) => (
+              <circle
+                key={s.key}
+                cx={x(hover)}
+                cy={y(months[hover][s.key])}
+                r="3.2"
+                fill="var(--color-background)"
+                stroke={s.color}
+                strokeWidth="2"
+              />
+            ))}
+          </g>
+        )}
+      </svg>
+    </Box>
+  );
+}

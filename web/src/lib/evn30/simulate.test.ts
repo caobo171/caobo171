@@ -47,7 +47,9 @@ describe("simulate", () => {
 
   test("reports the deepest fall from peak for each channel", () => {
     const r = simulate(snapshot, DEFAULT_INPUTS);
-    expect(channel(r, "gold").maxDrawdown).toBeCloseTo(-0.2423, 3);
+    // The final point is restated at today's prices, so gold's fall includes the
+    // pullback since the start of this month.
+    expect(channel(r, "gold").maxDrawdown).toBeCloseTo(-0.24815, 4);
     expect(channel(r, "etf").maxDrawdown).toBeCloseTo(-0.2665, 3);
     expect(channel(r, "bank").maxDrawdown).toBe(0);
   });
@@ -144,6 +146,12 @@ describe("format", () => {
     expect(money(854_407_688)).toBe("854.4M ₫");
     expect(money(4_687_500)).toBe("4.7M ₫");
     expect(money(0)).toBe("0 ₫");
+  });
+
+  test("money keeps sub-million amounts readable in thousands", () => {
+    expect(money(174_689)).toBe("175k ₫");
+    expect(money(999_999)).toBe("1,000k ₫");
+    expect(money(-5_000)).toBe("-5k ₫");
   });
 
   test("percent renders two decimals by default", () => {
