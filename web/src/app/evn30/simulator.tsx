@@ -19,6 +19,7 @@ import {
   Tabs,
   Text,
   TextField,
+  Tooltip,
 } from "@radix-ui/themes";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
@@ -474,9 +475,11 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
               <Text as="div" size="7" weight="bold" style={{ letterSpacing: "-0.02em" }}>
                 {money(c.value, lang)}
               </Text>
-              <Text as="div" size="2" color="gray" mb="2">
-                {signedMoney(c.profit, lang)} {t.onWhatYouPaidIn}
-              </Text>
+              <Tooltip content={t.beforeInflationHelp}>
+                <Text as="div" size="2" color="gray" mb="2" style={{ cursor: "help" }}>
+                  {signedMoney(c.profit, lang)} {t.onWhatYouPaidIn}
+                </Text>
+              </Tooltip>
               <Badge color={ACCENT[c.key]} variant="soft">
                 {percent(c.xirr, 2, lang)} {t.aYear}
               </Badge>
@@ -505,7 +508,13 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
                     <Table.ColumnHeaderCell>{t.thBoughtIn}</Table.ColumnHeaderCell>
                     <Table.ColumnHeaderCell>{t.thIdleCash}</Table.ColumnHeaderCell>
                     <Table.ColumnHeaderCell>{t.thDeepestFall}</Table.ColumnHeaderCell>
-                    <Table.ColumnHeaderCell>{t.thAfterInflation}</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>
+                      <Tooltip content={t.afterInflationHelp}>
+                        <span style={{ textDecoration: "underline dotted", cursor: "help" }}>
+                          {t.thAfterInflation}
+                        </span>
+                      </Tooltip>
+                    </Table.ColumnHeaderCell>
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>

@@ -76,7 +76,10 @@ export interface ChannelResult {
   profitPct: number;
   /** Money-weighted annual return, as a fraction. */
   xirr: number;
-  /** Profit measured against contributions restated in today's money. */
+  /** The final value deflated into today's purchasing power. Equal to `value`
+   *  for a run that ends today; smaller for one that ends in the future. */
+  realValue: number;
+  /** `realValue` less the contributions, both in today's money. */
   realProfit: number;
   /** Deepest fall from a running peak, as a negative fraction. */
   maxDrawdown: number;

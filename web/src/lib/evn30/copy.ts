@@ -64,6 +64,8 @@ export interface Copy {
   thIdleCash: string;
   thDeepestFall: string;
   thAfterInflation: string;
+  afterInflationHelp: string;
+  beforeInflationHelp: string;
   ofMonths: (bought: number, total: number) => string;
   fundUnits: (n: string) => string;
   bankHolding: string;
@@ -141,7 +143,7 @@ const EN: Copy = {
   gold: "SJC gold",
   etf: "VN30 ETF",
   bank: "Bank savings",
-  onWhatYouPaidIn: "on what you paid in",
+  onWhatYouPaidIn: "on what you paid in, before inflation",
   aYear: "a year",
   winner: "Best",
 
@@ -157,7 +159,11 @@ const EN: Copy = {
   thBoughtIn: "Bought in",
   thIdleCash: "Idle cash",
   thDeepestFall: "Deepest fall in the pot",
-  thAfterInflation: "After inflation",
+  thAfterInflation: "Profit after inflation, in today's money",
+  afterInflationHelp:
+    "The same profit, expressed in what money is worth today. A run that ends in the future is discounted back to now, so +227M means 227 million of today's purchasing power — not 227 million of 2035 money, which would buy considerably less.",
+  beforeInflationHelp:
+    "Money as it stands at the end of the run, with no adjustment for prices having risen. The column on the right restates it in today's money.",
   ofMonths: (b, t) => `${b} / ${t} months`,
   fundUnits: (n) => `${n} units`,
   bankHolding: "compounds monthly",
@@ -272,7 +278,7 @@ const VI: Copy = {
   gold: "Vàng SJC",
   etf: "Quỹ ETF VN30",
   bank: "Gửi tiết kiệm",
-  onWhatYouPaidIn: "so với vốn bỏ ra",
+  onWhatYouPaidIn: "so với vốn bỏ ra, chưa trừ lạm phát",
   aYear: "mỗi năm",
   winner: "Cao nhất",
 
@@ -288,7 +294,11 @@ const VI: Copy = {
   thBoughtIn: "Số tháng mua được",
   thIdleCash: "Tiền mặt còn dư",
   thDeepestFall: "Mức sụt sâu nhất của danh mục",
-  thAfterInflation: "Sau lạm phát",
+  thAfterInflation: "Lãi sau lạm phát, quy về tiền hôm nay",
+  afterInflationHelp:
+    "Vẫn là khoản lãi đó, nhưng quy về sức mua của đồng tiền hôm nay. Nếu bạn chạy đến tương lai, con số đã được chiết khấu ngược về hiện tại — +227 triệu nghĩa là 227 triệu theo giá trị hôm nay, chứ không phải 227 triệu của năm 2035, vốn mua được ít hơn nhiều.",
+  beforeInflationHelp:
+    "Số tiền danh nghĩa tại thời điểm kết thúc, chưa điều chỉnh việc giá cả đã tăng. Cột bên phải quy nó về tiền hôm nay.",
   ofMonths: (b, t) => `${b} / ${t} tháng`,
   fundUnits: (n) => `${n} chứng chỉ quỹ`,
   bankHolding: "lãi nhập gốc hằng tháng",

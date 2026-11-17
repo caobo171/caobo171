@@ -289,10 +289,17 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
   const cpiEnd = cpiFor(snapshot.cpi, endYear);
   const cpiStart = cpiFor(snapshot.cpi, Number(rows[0].month.slice(0, 4)));
 
-  let paidInToday = seed * (cpiEnd / cpiStart);
+  // Everything "real" is quoted in TODAY's money, never the end date's. For a
+  // backtest the two are the same; for a run ending in 2035, saying "worth 227
+  // million after inflation" has to mean 227 million now, not 227 million then.
+  const todayYear = Number(snapshot.latest.date.slice(0, 4));
+  const cpiRef = cpiFor(snapshot.cpi, todayYear);
+  const toTodaysMoney = cpiRef / cpiEnd;
+
+  let paidInToday = seed * (cpiRef / cpiStart);
   rows.forEach((row, i) => {
     paidInToday +=
-      months[i].contribution * (cpiEnd / cpiFor(snapshot.cpi, Number(row.month.slice(0, 4))));
+      months[i].contribution * (cpiRef / cpiFor(snapshot.cpi, Number(row.month.slice(0, 4))));
   });
 
   const finals: Record<ChannelKey, number> = {
@@ -331,7 +338,8 @@ export function simulate(snapshot: Snapshot, inputs: Inputs): SimulationResult {
       profit,
       profitPct: paidIn > 0 ? profit / paidIn : 0,
       xirr: paidIn > 0 ? xirr(flows, value, endDay) : 0,
-      realProfit: value - paidInToday,
+      realValue: value * toTodaysMoney,
+      realProfit: value * toTodaysMoney - paidInToday,
       maxDrawdown: paidIn > 0 ? deepestFall(seriesFor[key]) : 0,
       ...extras[key],
     };

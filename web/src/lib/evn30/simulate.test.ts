@@ -112,6 +112,20 @@ describe("simulate", () => {
     expect(r.projectedFrom).toBeNull();
   });
 
+  test("states profit after inflation in today's money, even when the run ends in the future", () => {
+    const r = simulate(snapshot, { ...DEFAULT_INPUTS, endMonth: "2035-12" });
+    for (const c of r.channels) {
+      // The nominal figure is in 2035 dong; the real one is deflated to today.
+      expect(c.realValue).toBeLessThan(c.value);
+      expect(c.realProfit).toBeCloseTo(c.realValue - r.paidInToday, 0);
+    }
+  });
+
+  test("a backtest's real and nominal figures coincide, since it ends today", () => {
+    const r = simulate(snapshot, DEFAULT_INPUTS);
+    for (const c of r.channels) expect(c.realValue).toBeCloseTo(c.value, 0);
+  });
+
   test("orders channels by return, best first", () => {
     const r = simulate(snapshot, DEFAULT_INPUTS);
     expect(r.channels.map((c) => c.key)).toEqual(["gold", "etf", "bank"]);
