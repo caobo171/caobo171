@@ -51,6 +51,8 @@ export interface Inputs {
   /** Used instead of a share of salary when `mode` is "fixed". */
   fixedAmount: number;
   monthlyCapVnd: number;
+  /** Spending to test the result against, per month, in today's money. */
+  monthlySpend: number;
 }
 
 export interface MonthPoint {

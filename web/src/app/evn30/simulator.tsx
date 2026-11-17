@@ -27,7 +27,7 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "reac
 import { GITHUB, WELE } from "@/app/links";
 import { COPY, LANGS, type Copy, type Lang } from "@/lib/evn30/copy";
 import { dayName, money, monthName, percent, plain, signedMoney, tael } from "@/lib/evn30/format";
-import { DEFAULT_INPUTS, simulate } from "@/lib/evn30/simulate";
+import { DEFAULT_INPUTS, retirement, simulate, WITHDRAWAL_RATE } from "@/lib/evn30/simulate";
 import {
   parseInputs,
   parseLang,
@@ -43,12 +43,6 @@ import type { ChannelKey, Inputs, Snapshot } from "@/lib/evn30/types";
 
 import { Chart } from "./chart";
 import { Sources } from "./sources";
-
-/**
- * The conventional planning withdrawal rate. Fixed rather than a control: it is
- * a rule of thumb, and a slider would invite treating it as a forecast.
- */
-const WITHDRAWAL_RATE = 0.04;
 
 /** How long a run to open up when the reader moves the start past the end. */
 const DEFAULT_RUN_MONTHS = 12;
@@ -259,6 +253,10 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
   const inflationPerYear = result.months.length
     ? result.inflationFactor ** (12 / result.months.length) - 1
     : 0;
+
+  const verdicts = new Map(
+    result.channels.map((c) => [c.key, retirement(c.realValue, applied.monthlySpend)]),
+  );
 
   const priced = result.projectedFrom
     ? monthName(result.months[result.months.length - 1]?.month ?? lastRealMonth, lang)
@@ -477,6 +475,20 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
                 />
               </Field>
             )}
+
+            <Field
+              label={t.monthlySpend}
+              value={`${plain(draft.monthlySpend, lang)} ₫${t.perMonth}`}
+              help={t.monthlySpendHelp}
+            >
+              <TextField.Root
+                size="2"
+                inputMode="numeric"
+                aria-label={t.monthlySpend}
+                value={plain(draft.monthlySpend, lang)}
+                onChange={(e) => set("monthlySpend", digits(e.target.value))}
+              />
+            </Field>
           </Grid>
 
           <Separator size="4" my="4" />
@@ -582,17 +594,33 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
               <Badge color={ACCENT[c.key]} variant="soft">
                 {percent(c.xirr, 2, lang)} {t.aYear}
               </Badge>
-              {/* What the pot would pay, which is the question behind the pot. */}
+              {/* What the pot would pay, and whether that is enough to live on. */}
               <Separator size="4" my="3" />
               <Flex align="center" gap="1">
                 <Text as="div" size="2">
                   {t.incomeLine(
-                    money((c.realValue * WITHDRAWAL_RATE) / 12, lang),
+                    money(verdicts.get(c.key)!.monthlyIncome, lang),
                     percent(WITHDRAWAL_RATE, 0, lang),
                   )}
                 </Text>
                 <InfoDot text={t.incomeHelp} />
               </Flex>
+              {verdicts.get(c.key)!.covers !== null ? (
+                <Flex align="center" gap="2" mt="2" wrap="wrap">
+                  <Badge color={verdicts.get(c.key)!.covers ? "green" : "red"} variant="soft">
+                    {verdicts.get(c.key)!.covers ? t.covers : t.coversNot}
+                  </Badge>
+                  <Text size="1" color="gray">
+                    {verdicts.get(c.key)!.covers
+                      ? t.coverageEnough(percent(verdicts.get(c.key)!.coverage!, 0, lang))
+                      : t.coverageShort(
+                          percent(verdicts.get(c.key)!.coverage!, 0, lang),
+                          money(verdicts.get(c.key)!.shortfallMonthly, lang),
+                          money(verdicts.get(c.key)!.potNeeded, lang),
+                        )}
+                  </Text>
+                </Flex>
+              ) : null}
             </Card>
           ))}
         </Grid>

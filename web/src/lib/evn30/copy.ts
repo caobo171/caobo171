@@ -56,6 +56,12 @@ export interface Copy {
   afterInflationShort: string;
   incomeLine: (amount: string, rate: string) => string;
   incomeHelp: string;
+  monthlySpend: string;
+  monthlySpendHelp: string;
+  covers: string;
+  coversNot: string;
+  coverageEnough: (pct: string) => string;
+  coverageShort: (pct: string, short: string, need: string) => string;
   aYear: string;
   winner: string;
 
@@ -166,6 +172,14 @@ const EN: Copy = {
   incomeLine: (amount, rate) => `${amount} a month if you drew ${rate} a year`,
   incomeHelp:
     "A rule of thumb, not a promise. Drawing 4% of the pot a year is a common planning assumption for making savings last, and the figure here is in today's money. It takes no account of tax, of what you actually spend, or of the pot falling in a bad year. This page is a record of prices, not financial advice.",
+  monthlySpend: "I'd need to live on",
+  monthlySpendHelp:
+    "Per month, in today's money — what you would want to spend, not necessarily what you spend now. Each result is then measured against it at a 4% withdrawal. Set it to zero to hide the verdict.",
+  covers: "Enough",
+  coversNot: "Not enough",
+  coverageEnough: (pct) => `covers ${pct} of that`,
+  coverageShort: (pct, short, need) =>
+    `covers ${pct} — short ${short} a month; the pot would need to reach ${need}`,
   aYear: "a year",
   winner: "Best",
 
@@ -315,6 +329,14 @@ const VI: Copy = {
   incomeLine: (amount, rate) => `${amount}/tháng nếu mỗi năm rút ${rate}`,
   incomeHelp:
     "Đây là quy ước tham khảo, không phải cam kết. Rút 4% danh mục mỗi năm là giả định thường dùng khi ước lượng khoản tiết kiệm trụ được bao lâu, và con số ở đây đã quy về giá hôm nay. Nó chưa tính thuế, chưa tính bạn thực sự tiêu bao nhiêu, cũng chưa tính những năm danh mục sụt giảm. Trang này là bản ghi giá, không phải lời khuyên đầu tư.",
+  monthlySpend: "Mỗi tháng cần tiêu",
+  monthlySpendHelp:
+    "Tính theo tháng và theo sức mua hôm nay — mức bạn muốn tiêu, không nhất thiết là mức đang tiêu. Mỗi kênh sẽ được đối chiếu với con số này theo mức rút 4% mỗi năm. Để 0 nếu không muốn hiện phần kết luận.",
+  covers: "Đủ",
+  coversNot: "Chưa đủ",
+  coverageEnough: (pct) => `đáp ứng ${pct} mức chi đó`,
+  coverageShort: (pct, short, need) =>
+    `mới đáp ứng ${pct} — thiếu ${short}/tháng; danh mục cần đạt ${need}`,
   aYear: "mỗi năm",
   winner: "Cao nhất",
 

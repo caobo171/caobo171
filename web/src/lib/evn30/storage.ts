@@ -3,7 +3,7 @@ import { DEFAULT_INPUTS } from "./simulate";
 import type { Inputs, SavingMode } from "./types";
 
 /** Versioned, so a later change to Inputs cannot resurrect an incompatible shape. */
-export const STORAGE_KEY = "evn30:inputs:v4";
+export const STORAGE_KEY = "evn30:inputs:v5";
 
 const MODES: SavingMode[] = ["percent", "fixed"];
 
@@ -16,6 +16,7 @@ const BOUNDS = {
   savePct: [0, 100],
   fixedAmount: [0, 10_000_000_000],
   monthlyCapVnd: [1_000_000, 100_000_000],
+  monthlySpend: [0, 10_000_000_000],
 } as const;
 
 function num(raw: unknown, key: keyof typeof BOUNDS): number {
@@ -61,6 +62,7 @@ export function parseInputs(raw: string | null): Inputs | null {
     savePct: num(o.savePct, "savePct"),
     fixedAmount: num(o.fixedAmount, "fixedAmount"),
     monthlyCapVnd: num(o.monthlyCapVnd, "monthlyCapVnd"),
+    monthlySpend: num(o.monthlySpend, "monthlySpend"),
   };
 }
 

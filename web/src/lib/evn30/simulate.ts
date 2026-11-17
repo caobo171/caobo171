@@ -15,6 +15,42 @@ export const ETF_FEE = 0.0015;
 /** 1 lượng = 10 chỉ. Gold is bought in chỉ. */
 export const CHI_PER_TAEL = 10;
 
+/**
+ * The conventional planning withdrawal rate. A rule of thumb for how much a
+ * pot can pay out indefinitely, not a promise about any particular decade.
+ */
+export const WITHDRAWAL_RATE = 0.04;
+
+export interface Retirement {
+  /** What the pot pays each month at the withdrawal rate, in today's money. */
+  monthlyIncome: number;
+  /** Income as a fraction of the spending asked of it; null if none was named. */
+  coverage: number | null;
+  covers: boolean | null;
+  shortfallMonthly: number;
+  /** The pot that would cover the spending outright. */
+  potNeeded: number;
+}
+
+/**
+ * Answers the question the rest of the page only implies: would this be enough
+ * to live on? Both figures are in today's money, so they are comparable.
+ */
+export function retirement(realValue: number, monthlySpend: number): Retirement {
+  const monthlyIncome = (Math.max(0, realValue) * WITHDRAWAL_RATE) / 12;
+  const spend = Math.max(0, monthlySpend);
+  if (spend === 0) {
+    return { monthlyIncome, coverage: null, covers: null, shortfallMonthly: 0, potNeeded: 0 };
+  }
+  return {
+    monthlyIncome,
+    coverage: monthlyIncome / spend,
+    covers: monthlyIncome >= spend,
+    shortfallMonthly: Math.max(0, spend - monthlyIncome),
+    potNeeded: (spend * 12) / WITHDRAWAL_RATE,
+  };
+}
+
 export const DEFAULT_INPUTS: Inputs = {
   startMonth: "2016-01",
   endMonth: "",
@@ -26,6 +62,7 @@ export const DEFAULT_INPUTS: Inputs = {
   savePct: 25,
   fixedAmount: 2_000_000,
   monthlyCapVnd: 50_000_000,
+  monthlySpend: 20_000_000,
 };
 
 /**

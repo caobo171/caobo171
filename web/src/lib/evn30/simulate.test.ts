@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 
 import { money, percent, signedMoney } from "./format";
-import { DEFAULT_INPUTS, simulate } from "./simulate";
+import { DEFAULT_INPUTS, retirement, simulate, WITHDRAWAL_RATE } from "./simulate";
 import type { Snapshot } from "./types";
 
 const snapshot = JSON.parse(
@@ -314,5 +314,45 @@ describe("format", () => {
   test("signedMoney always carries a sign", () => {
     expect(signedMoney(1_149_817_000)).toBe("+1,149.8M ₫");
     expect(signedMoney(-5_000_000)).toBe("-5.0M ₫");
+  });
+});
+
+describe("retirement", () => {
+  test("turns a pot into the monthly income it supports", () => {
+    // 3bn at 4% a year is 120M a year, or 10M a month.
+    const r = retirement(3_000_000_000, 0);
+    expect(r.monthlyIncome).toBeCloseTo(10_000_000, 0);
+    expect(WITHDRAWAL_RATE).toBe(0.04);
+  });
+
+  test("answers whether that covers the spending asked of it", () => {
+    const enough = retirement(3_000_000_000, 8_000_000);
+    expect(enough.covers).toBe(true);
+    expect(enough.coverage).toBeCloseTo(1.25, 4);
+    expect(enough.shortfallMonthly).toBe(0);
+
+    const short = retirement(3_000_000_000, 20_000_000);
+    expect(short.covers).toBe(false);
+    expect(short.coverage).toBeCloseTo(0.5, 4);
+    expect(short.shortfallMonthly).toBeCloseTo(10_000_000, 0);
+  });
+
+  test("says how large the pot would have to be", () => {
+    // 20M a month is 240M a year, which at 4% needs 6bn.
+    expect(retirement(3_000_000_000, 20_000_000).potNeeded).toBeCloseTo(6_000_000_000, 0);
+  });
+
+  test("gives no verdict when no spending has been named", () => {
+    const r = retirement(3_000_000_000, 0);
+    expect(r.coverage).toBeNull();
+    expect(r.covers).toBeNull();
+  });
+
+  test("survives a pot of nothing", () => {
+    const r = retirement(0, 20_000_000);
+    expect(r.monthlyIncome).toBe(0);
+    expect(r.coverage).toBe(0);
+    expect(r.covers).toBe(false);
+    expect(r.shortfallMonthly).toBeCloseTo(20_000_000, 0);
   });
 });
