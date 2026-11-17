@@ -54,6 +54,8 @@ export interface Copy {
   bank: string;
   onWhatYouPaidIn: string;
   afterInflationShort: string;
+  incomeLine: (amount: string, rate: string) => string;
+  incomeHelp: string;
   aYear: string;
   winner: string;
 
@@ -161,6 +163,9 @@ const EN: Copy = {
   bank: "Bank savings",
   onWhatYouPaidIn: "on what you paid in",
   afterInflationShort: "after inflation, in today's money",
+  incomeLine: (amount, rate) => `${amount} a month if you drew ${rate} a year`,
+  incomeHelp:
+    "A rule of thumb, not a promise. Drawing 4% of the pot a year is a common planning assumption for making savings last, and the figure here is in today's money. It takes no account of tax, of what you actually spend, or of the pot falling in a bad year. This page is a record of prices, not financial advice.",
   aYear: "a year",
   winner: "Best",
 
@@ -307,6 +312,9 @@ const VI: Copy = {
   bank: "Gửi tiết kiệm",
   onWhatYouPaidIn: "so với vốn bỏ ra",
   afterInflationShort: "sau lạm phát, theo giá hôm nay",
+  incomeLine: (amount, rate) => `${amount}/tháng nếu mỗi năm rút ${rate}`,
+  incomeHelp:
+    "Đây là quy ước tham khảo, không phải cam kết. Rút 4% danh mục mỗi năm là giả định thường dùng khi ước lượng khoản tiết kiệm trụ được bao lâu, và con số ở đây đã quy về giá hôm nay. Nó chưa tính thuế, chưa tính bạn thực sự tiêu bao nhiêu, cũng chưa tính những năm danh mục sụt giảm. Trang này là bản ghi giá, không phải lời khuyên đầu tư.",
   aYear: "mỗi năm",
   winner: "Cao nhất",
 

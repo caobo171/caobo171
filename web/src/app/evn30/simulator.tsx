@@ -44,6 +44,12 @@ import type { ChannelKey, Inputs, Snapshot } from "@/lib/evn30/types";
 import { Chart } from "./chart";
 import { Sources } from "./sources";
 
+/**
+ * The conventional planning withdrawal rate. Fixed rather than a control: it is
+ * a rule of thumb, and a slider would invite treating it as a forecast.
+ */
+const WITHDRAWAL_RATE = 0.04;
+
 /** How long a run to open up when the reader moves the start past the end. */
 const DEFAULT_RUN_MONTHS = 12;
 
@@ -576,6 +582,17 @@ export function Evn30Simulator({ snapshot }: { snapshot: Snapshot }) {
               <Badge color={ACCENT[c.key]} variant="soft">
                 {percent(c.xirr, 2, lang)} {t.aYear}
               </Badge>
+              {/* What the pot would pay, which is the question behind the pot. */}
+              <Separator size="4" my="3" />
+              <Flex align="center" gap="1">
+                <Text as="div" size="2">
+                  {t.incomeLine(
+                    money((c.realValue * WITHDRAWAL_RATE) / 12, lang),
+                    percent(WITHDRAWAL_RATE, 0, lang),
+                  )}
+                </Text>
+                <InfoDot text={t.incomeHelp} />
+              </Flex>
             </Card>
           ))}
         </Grid>
