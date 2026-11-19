@@ -8,14 +8,15 @@ import { Evn30Simulator } from "./simulator";
 const snapshot = snapshotJson as unknown as Snapshot;
 
 export const metadata: Metadata = {
-  title: "What if I'd just kept buying? — VN30, gold and the bank",
+  title: "Mua đều mỗi tháng thì bao giờ đủ nghỉ hưu? - VN30, vàng và tiết kiệm",
   description:
-    "Put part of a Vietnamese salary aside every month since 2016 and watch where it lands: the VN30 ETF, a bank savings account, or SJC gold. Real prices, real inflation, real fees.",
+    "Để dành một phần lương mỗi tháng từ 2016 và xem tiền đi về đâu: quỹ ETF VN30, gửi tiết kiệm ngân hàng, hay vàng SJC. Giá thật, lạm phát thật, phí thật.",
   openGraph: {
-    title: "What if I'd just kept buying?",
+    title: "Mua đều mỗi tháng thì bao giờ đủ nghỉ hưu?",
     description:
-      "VN30 ETF vs bank savings vs SJC gold, 2016 to today, with real Vietnamese prices and inflation.",
+      "Quỹ ETF VN30, gửi tiết kiệm ngân hàng và vàng SJC, từ 2016 đến nay, theo giá và lạm phát thật của Việt Nam.",
     type: "website",
+    locale: "vi_VN",
     images: [
       {
         url: "/evn30-og.png",
